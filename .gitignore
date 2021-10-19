@@ -1,3 +1,4 @@
-**/data
-**/.idea
+**/data/
+**/.idea/
 *.pycache
+**/detectron2-windows/
