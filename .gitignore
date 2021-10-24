@@ -1,6 +1,6 @@
 **/data/
 **/.idea/
 *.pycache
-**/detectron2-windows/
 **/yolov5/
 **/EfficientDet_Pytorch/
+**/detectron2_windows/
