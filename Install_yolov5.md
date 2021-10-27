@@ -28,7 +28,6 @@ cd yolov5
 ##Step 5 - Finally, install all requirements
 ```
 pip install -r requirements.txt
-
 ```
 
 #That's it - you now have yolov5 
