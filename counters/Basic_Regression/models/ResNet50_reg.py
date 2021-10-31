@@ -6,8 +6,8 @@ class ResNet_50_regressor(torch.nn.Module):
     def __init__(self):
         super(ResNet_50_regressor, self).__init__()
         self.model = resnet50(pretrained=True)
-        self.model.fc = torch.nn.Linear(1, bias=True)
+        self.model.fc = torch.nn.Linear(2048, 1, bias=True)
 
     def forward(self, input):
         x = self.model(input)
-        return x
+        return x.view(-1)

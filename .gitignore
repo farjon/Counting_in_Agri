@@ -5,3 +5,6 @@
 **/EfficientDet_Pytorch/
 **/detectron2_windows/
 **/Data/
+**/notebooks/
+**/Logs/
+**/Trained_Models/
