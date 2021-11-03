@@ -23,7 +23,7 @@ def main(args):
         os.makedirs(images_output_dir, exist_ok=True)
         json_file = os.path.join(output_dir, current_set +'.json')
 
-        categories = {'supercategory': None, 'id': 1, 'name': args.data}
+        categories = [{'supercategory': None, 'id': 1, 'name': args.data}]
         images = []
         annotations = []
         image_id = 0
