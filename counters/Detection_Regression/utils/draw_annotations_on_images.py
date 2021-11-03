@@ -23,9 +23,9 @@ def main(args):
     args.output_path = os.path.join(args.data_path, 'images_with_annotations')
     os.makedirs(args.output_path, exist_ok=True)
     # register_coco_instances : name, metadata, json_file, image_root
-    register_coco_instances("train", {}, f'{args.data_path}/coco/train.json', f'{args.data_path}/coco/images')
-    register_coco_instances("val", {}, f'{args.data_path}/coco/val.json', f'{args.data_path}/coco/images')
-    register_coco_instances("test", {}, f'{args.data_path}/coco/val.json', f'{args.data_path}/coco/images')
+    register_coco_instances("train", {}, f'{args.data_path}/coco/train/train.json', f'{args.data_path}/coco/train')
+    register_coco_instances("val", {}, f'{args.data_path}/coco/val/val.json', f'{args.data_path}/coco/val')
+    # register_coco_instances("test", {}, f'{args.data_path}/coco/val.json', f'{args.data_path}/coco/images')
 
     sets_to_vis = ['train', 'val']
 

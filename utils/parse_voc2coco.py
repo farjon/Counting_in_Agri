@@ -17,10 +17,9 @@ def main(args):
     sets = ['train', 'val']
     for current_set in sets:
         data_dir = os.path.join(args.ROOT_DIR, args.data, 'voc', current_set)
-        output_dir = os.path.join(args.ROOT_DIR, args.data, 'coco')
+        output_dir = os.path.join(args.ROOT_DIR, args.data, 'coco', current_set)
         os.makedirs(output_dir, exist_ok=True)
-        images_output_dir = os.path.join(output_dir, 'images')
-        os.makedirs(images_output_dir, exist_ok=True)
+
         json_file = os.path.join(output_dir, current_set +'.json')
 
         categories = [{'supercategory': None, 'id': 1, 'name': args.data}]
@@ -31,13 +30,13 @@ def main(args):
         for xml_file in glob(os.path.join(data_dir, '*.xml')):
             image_path = xml_file[:-4] + '.JPG'
             image_name = image_path.split('\\')[-1]
-            image_new_path = os.path.join(images_output_dir, image_name)
+            image_new_path = os.path.join(output_dir, image_name)
             im = Image.open(image_path)
             im.save(image_new_path)
             tree = ET.parse(xml_file)
             root = tree.getroot()
-            width = root.find('size').find('width').text
-            height = root.find('size').find('height').text
+            width = int(root.find('size').find('width').text)
+            height = int(root.find('size').find('height').text)
             images.append({
                 'file_name': image_name, 'height': height, 'width': width,
                 'id': image_id

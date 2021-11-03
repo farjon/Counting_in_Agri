@@ -63,3 +63,25 @@ you need to install a previoius version of fvcore library
 ```
 pip install git+https://github.com/facebookresearch/fvcore@4525b814c8bb0f70510e37e68247c958010eb285
 ```
+
+if you are facing troubles with cocoeval and numpy versions \
+like the following issue:
+```text
+TypeError: object of type <class 'numpy.float64'> cannot be safely interpreted as an integer.
+```
+The numpy version you installed is ok \
+don't mess with it
+simply go to the script
+```text
+pycocotools\cocoeval.py
+```
+lines 507-508, and change
+```text
+self.iouThrs = np.linspace(.5, 0.95, np.round((0.95 - .5) / .05) + 1, endpoint=True)
+self.recThrs = np.linspace(.0, 1.00, np.round((1.00 - .0) / .01) + 1, endpoint=True)
+```
+with
+```text
+self.iouThrs = np.linspace(.5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
+self.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .01)) + 1, endpoint=True)
+```
