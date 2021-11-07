@@ -87,7 +87,8 @@ def main(args):
 
     # --------------------------- Start edit --------------------------- #
     # setting up path to save pretrained models
-    torch.hub.set_dir(os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained'))
+    args.save_downloaded_weights = os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained')
+    torch.hub.set_dir(args.save_downloaded_weights)
     args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, str(args.exp_number))
     os.makedirs(args.save_checkpoint_path, exist_ok=True)
     # Create data loaders

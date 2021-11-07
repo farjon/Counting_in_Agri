@@ -80,38 +80,24 @@ def main(args):
     trainer = CocoTrainer(cfg)
     trainer.resume_or_load(resume=False)
     trainer.train()
-    # Create model
-    # if args.model_type == 'resnet50':
-    #     from counters.Basic_Regression.models.ResNet50_reg import ResNet_50_regressor as Reg_Model
-    # model = Reg_Model()
-    #
-    # # define loss function
-    # if args.criteria == 'mse':
-    #     loss_func = torch.nn.MSELoss(reduction='mean')
-    # elif args.criteria == 'mae':
-    #     loss_func = torch.nn.L1Loss(reduction='mean')
-    #
-    # if args.optim == 'adamw':
-    #     optimizer = torch.optim.AdamW(model.parameters(), args.lr)
-    # elif args.optim == 'adam':
-    #     optimizer = torch.optim.Adam(model.parameters(), args.lr)
-    # elif args.optim == 'sgd':
-    #     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=0.9, nesterov=True)
-    #
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
-    #
-    # # Train model
-    # train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer, scheduler)
-    #
-    # best_model = Reg_Model().load_state_dict(torch.load(os.path.join(
-    #     args.save_checkpoint_path, f'best_{args.model_type}_model.pth'
-    # )))
-    # final_model = Reg_Model().load_state_dict(torch.load(os.path.join(
-    #     args.save_checkpoint_path, f'final_{args.model_type}_model.pth'
-    # )))
-    #
-    # # Test Models
-    # final_scores, best_scores = test_models(args, test_dataset, models = [final_model, best_model])
+
+    # Run inference over the test set towards the regression phase
+    from detectron2.data import DatasetCatalog, MetadataCatalog, build_detection_test_loader
+    from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+    from detectron2.engine import DefaultPredictor
+    import cv2
+    import glob
+
+    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+    cfg.DATASETS.TEST = ("my_dataset_test",)
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7  # set the testing threshold for this model
+    predictor = DefaultPredictor(cfg)
+    test_metadata = MetadataCatalog.get("my_dataset_test")
+
+
+    for imageName in glob.glob('/content/test/*jpg'):
+        im = cv2.imread(imageName)
+        outputs = predictor(im)
 
     # Report results
 
