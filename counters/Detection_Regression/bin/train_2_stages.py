@@ -65,40 +65,43 @@ def main(args):
     # os.makedirs(args.save_checkpoint_path, exist_ok=True)
 
     # --------------------------- Stage 1 - Detection ---------------------------
-    from detectron2_windows.detectron2.engine import DefaultTrainer
-    from detectron2_windows.detectron2.evaluation import COCOEvaluator
-    from counters.Detection_Regression.config.adjust_detectron_cfg import create_cfg
-    cfg = create_cfg(args)
-    class CocoTrainer(DefaultTrainer):
-        @classmethod
-        def build_evaluator(cls, cfg, dataset_name, output_folder=None):
-            if output_folder is None:
-                os.makedirs("coco_eval", exist_ok=True)
-                output_folder = "coco_eval"
-            return COCOEvaluator(dataset_name, cfg, False, output_folder)
-    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-    trainer = CocoTrainer(cfg)
-    trainer.resume_or_load(resume=False)
-    trainer.train()
+    if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
+        from detectron2_windows.detectron2.engine import DefaultTrainer
+        from detectron2_windows.detectron2.evaluation import COCOEvaluator
+        from counters.Detection_Regression.config.adjust_detectron_cfg import create_cfg
+        cfg = create_cfg(args)
+        class CocoTrainer(DefaultTrainer):
+            @classmethod
+            def build_evaluator(cls, cfg, dataset_name, output_folder=None):
+                if output_folder is None:
+                    os.makedirs("coco_eval", exist_ok=True)
+                    output_folder = "coco_eval"
+                return COCOEvaluator(dataset_name, cfg, False, output_folder)
+        os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+        trainer = CocoTrainer(cfg)
+        trainer.resume_or_load(resume=False)
+        trainer.train()
 
-    # Run inference over the test set towards the regression phase
-    from detectron2.data import DatasetCatalog, MetadataCatalog, build_detection_test_loader
-    from detectron2.evaluation import COCOEvaluator, inference_on_dataset
-    from detectron2.engine import DefaultPredictor
-    import cv2
-    import glob
+        # Run inference over the test set towards the regression phase
+        from detectron2.data import DatasetCatalog, MetadataCatalog, build_detection_test_loader
+        from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+        from detectron2.engine import DefaultPredictor
+        import cv2
+        import glob
 
-    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
-    cfg.DATASETS.TEST = ("my_dataset_test",)
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7  # set the testing threshold for this model
-    predictor = DefaultPredictor(cfg)
-    test_metadata = MetadataCatalog.get("my_dataset_test")
+        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+        cfg.DATASETS.TEST = ("test",)
+        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7  # set the testing threshold for this model
+        predictor = DefaultPredictor(cfg)
 
+        for imageName in glob.glob('/val/*jpg'):
+            im = cv2.imread(imageName)
+            outputs = predictor(im)
 
-    for imageName in glob.glob('/content/test/*jpg'):
-        im = cv2.imread(imageName)
-        outputs = predictor(im)
-
+    elif args.detector == 'efficientDet':
+        pass
+    elif args.detector == 'yolov5':
+        pass
     # Report results
 
 
