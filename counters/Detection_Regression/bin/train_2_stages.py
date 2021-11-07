@@ -44,13 +44,8 @@ def main(args):
     else:
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco')
 
-
-
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
-        if args.detector == 'fasterRCNN':
-            args.det_model = 'faster_rcnn_X_101_32x8d_FPN_3x.yaml'
-        elif args.detector == 'RetinaNet':
-            args.det_model = 'retinanet_R_101_FPN_3x.yaml'
+        args.det_model = 'faster_rcnn_X_101_32x8d_FPN_3x.yaml'
         import detectron2_windows.detectron2
         from detectron2_windows.detectron2.utils.logger import setup_logger
         setup_logger()
@@ -70,28 +65,52 @@ def main(args):
     # os.makedirs(args.save_checkpoint_path, exist_ok=True)
 
     # --------------------------- Stage 1 - Detection ---------------------------
-    if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
-        from detectron2_windows.detectron2.engine import DefaultTrainer
-        from detectron2_windows.detectron2.evaluation import COCOEvaluator
-        from counters.Detection_Regression.config.adjust_detectron_cfg import create_cfg
-        # Create model
-        cfg = create_cfg(args)
-        class CocoTrainer(DefaultTrainer):
-            @classmethod
-            def build_evaluator(cls, cfg, dataset_name, output_folder=None):
-                if output_folder is None:
-                    os.makedirs("coco_eval", exist_ok=True)
-                    output_folder = "coco_eval"
-                return COCOEvaluator(dataset_name, cfg, False, output_folder)
-        os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-        trainer = CocoTrainer(cfg)
-        trainer.resume_or_load(resume=False)
-        trainer.train()
-
+    from detectron2_windows.detectron2.engine import DefaultTrainer
+    from detectron2_windows.detectron2.evaluation import COCOEvaluator
+    from counters.Detection_Regression.config.adjust_detectron_cfg import create_cfg
+    cfg = create_cfg(args)
+    class CocoTrainer(DefaultTrainer):
+        @classmethod
+        def build_evaluator(cls, cfg, dataset_name, output_folder=None):
+            if output_folder is None:
+                os.makedirs("coco_eval", exist_ok=True)
+                output_folder = "coco_eval"
+            return COCOEvaluator(dataset_name, cfg, False, output_folder)
+    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+    trainer = CocoTrainer(cfg)
+    trainer.resume_or_load(resume=False)
+    trainer.train()
+    # Create model
+    # if args.model_type == 'resnet50':
+    #     from counters.Basic_Regression.models.ResNet50_reg import ResNet_50_regressor as Reg_Model
+    # model = Reg_Model()
+    #
+    # # define loss function
+    # if args.criteria == 'mse':
+    #     loss_func = torch.nn.MSELoss(reduction='mean')
+    # elif args.criteria == 'mae':
+    #     loss_func = torch.nn.L1Loss(reduction='mean')
+    #
+    # if args.optim == 'adamw':
+    #     optimizer = torch.optim.AdamW(model.parameters(), args.lr)
+    # elif args.optim == 'adam':
+    #     optimizer = torch.optim.Adam(model.parameters(), args.lr)
+    # elif args.optim == 'sgd':
+    #     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=0.9, nesterov=True)
+    #
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
+    #
+    # # Train model
+    # train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer, scheduler)
+    #
+    # best_model = Reg_Model().load_state_dict(torch.load(os.path.join(
+    #     args.save_checkpoint_path, f'best_{args.model_type}_model.pth'
+    # )))
+    # final_model = Reg_Model().load_state_dict(torch.load(os.path.join(
+    #     args.save_checkpoint_path, f'final_{args.model_type}_model.pth'
+    # )))
+    #
     # # Test Models
-    # # perform test over test images in the dataset
-    # # collect the statistics over the images
-    # # run the regression and report matrices
     # final_scores, best_scores = test_models(args, test_dataset, models = [final_model, best_model])
 
     # Report results
