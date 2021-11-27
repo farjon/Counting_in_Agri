@@ -32,7 +32,7 @@ def parse_args():
 
 def create_dataset(args, train_dataset_params, test_dataset_params):
     if args.split_images:
-        from utils.split_raw_images import split_to_tiles
+        from utils.split_raw_images_anno_csv import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split')
