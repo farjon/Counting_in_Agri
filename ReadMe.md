@@ -8,7 +8,7 @@ Dataset_dir\
 &nbsp;&nbsp;&nbsp;&nbsp;
 &nbsp;&nbsp;&nbsp;&nbsp; train &nbsp;&nbsp;&nbsp;&nbsp; |
 &nbsp;&nbsp;&nbsp;&nbsp; test &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | 
-&nbsp;&nbsp;&nbsp;val \
+&nbsp;&nbsp;&nbsp;val 
 
 * The training pipes assume the data is already splitted into train-val-test datasets
 * If the images should be splitted into tiles, the first run will split it 

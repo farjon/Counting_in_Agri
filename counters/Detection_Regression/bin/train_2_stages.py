@@ -6,10 +6,10 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Melons', help='choose a dataset')
-    parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
+    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
+    parser.add_argument('-si', '--split_images', type=bool, default=True, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
-    parser.add_argument('-p', '--padding', type=int, default=10, help='padding size in case of splitting')
+    parser.add_argument('-p', '--padding', type=int, default=20, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
     parser.add_argument('-det', '--detector', type=str, default='efficientDet_0', help='choose a detector efficientDet_i / yolov5 / fasterRCNN / RetinaNet'
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient')
