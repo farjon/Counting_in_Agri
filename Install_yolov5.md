@@ -30,5 +30,10 @@ cd yolov5
 pip install -r requirements.txt
 ```
 
+###adding visualization tool
+```
+pip install wandb
+```
+
 #That's it - you now have yolov5 
 

@@ -1,4 +1,3 @@
-import os
 from detectron2_windows.detectron2.config import get_cfg
 from detectron2_windows.detectron2 import model_zoo
 

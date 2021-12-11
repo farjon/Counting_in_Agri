@@ -6,8 +6,9 @@ import argparse
 from PIL import Image
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
+    parser = argparse.ArgumentParser(description='Annotations parser from VOC to COCO')
     # --------------------------- Data Arguments ---------------------------
+    # parser.add_argument('-r', '--ROOT_DIR', type=str, help='path to data root folder')
     parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
 
     args = parser.parse_args()
