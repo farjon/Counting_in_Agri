@@ -39,13 +39,19 @@ def main(args):
     torch.manual_seed(10)
     np.random.seed(10)
 
+    if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet' or args.detector.split('_')[0] == 'efficientDet':
+        labels_format = 'coco'
+    elif args.detector.split('_')[0] == 'yolov5':
+        labels_format = 'yolo'
+
     if args.split_images:
         from utils.split_raw_images_anno_csv import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split', 'coco')
+        #TODO - make sure that the split function works on other data formats
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split', labels_format)
     else:
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco')
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, labels_format)
 
 
     test_folder = os.path.join(args.data_path, 'test')
@@ -113,6 +119,7 @@ def main(args):
                 'image_name': imgae_path,
                 'predictions': out
             })
+
 
     elif args.detector.split('_')[0] == 'efficientDet':
         cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_Regression', 'config',
@@ -185,7 +192,11 @@ def main(args):
         yolo_det_args.rect = True
         yolo_det_args.image_weights = True
         yolo_det_args.quad = False
-
+        yolo_det_args.noautoanchor = True
+        yolo_det_args.label_smoothing = 0.0
+        yolo_det_args.patience = 10
+        yolo_det_args.multi_scale = True
+        yolo_det_args.save_period = -1 # -1 to disable
 
         # for visualization needs
         import wandb
@@ -197,6 +208,7 @@ def main(args):
 
         from yolov5.train import main as yolo_train
         yolo_train(yolo_det_args)
+        # TODO - run inference to recive the predictions
 
     # Stage 1 is now complete, dump results into a json file and move on
 
