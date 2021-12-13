@@ -164,7 +164,7 @@ def main(args):
         # used parameters
         yolo_det_args = argparse.ArgumentParser()
         yolo_det_args = yolo_det_args.parse_args()
-        yolo_det_args.cfg = ''
+        yolo_det_args.cfg = cfg_path
         yolo_det_args.imgsz = 640
         yolo_det_args.batch_size = 2
         yolo_det_args.epochs = 5
@@ -182,7 +182,7 @@ def main(args):
         yolo_det_args.exist_ok = True
         yolo_det_args.single_cls = True
         yolo_det_args.noval = True
-        yolo_det_args.nosave = True
+        yolo_det_args.nosave = False
         yolo_det_args.workers = 0
         yolo_det_args.freeze = 0
         yolo_det_args.adam = True
@@ -208,8 +208,36 @@ def main(args):
 
         from yolov5.train import main as yolo_train
         yolo_train(yolo_det_args)
-        # TODO - run inference to recive the predictions
-
+        from yolov5 import detect
+        yolo_infer_args = argparse.ArgumentParser()
+        yolo_infer_args = yolo_infer_args.parse_args()
+        yolo_infer_args.project = os.path.join(args.ROOT_DIR, 'Results', 'detect', 'yolo')
+        os.makedirs(yolo_infer_args.project, exist_ok=True)
+        yolo_infer_args.name = args.exp_number
+        yolo_infer_args.weights = os.path.join(args.save_trained_models, yolo_det_args.name, 'weights', 'best.pt')
+        yolo_infer_args.source = os.path.join(args.data_path, 'test')
+        yolo_infer_args.conf_thres = 0.25
+        yolo_infer_args.iou_thres = 0.45 # NMS iou threshold
+        yolo_infer_args.imgsz = [640]
+        yolo_infer_args.max_det = 1000
+        yolo_infer_args.view_img = False
+        yolo_infer_args.save_txt = True
+        yolo_infer_args.save_conf = True
+        yolo_infer_args.save_crop = True
+        yolo_infer_args.nosave = True
+        yolo_infer_args.exist_ok = True
+        yolo_infer_args.classes = None
+        yolo_infer_args.agnostic_nms = True
+        yolo_infer_args.augment = True
+        yolo_infer_args.visualize = True
+        yolo_infer_args.update = True
+        yolo_infer_args.line_thickness = 3
+        yolo_infer_args.hide_conf = False
+        yolo_infer_args.hide_labels = False
+        yolo_infer_args.half = False
+        yolo_infer_args.imgsz *= 2 if len(yolo_infer_args.imgsz) == 1 else 1  # expand
+        # TODO - detect.run does not return anything, create a wrapper
+        detect.run(**vars(yolo_infer_args))
     # Stage 1 is now complete, dump results into a json file and move on
 
 

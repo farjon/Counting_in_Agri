@@ -9,7 +9,7 @@ class SpatialNMS(nn.Module):
         self.beta = beta
         self.strides = stride
 
-    def call(self, inputs):
+    def forward(self, inputs):
         P = inputs
         Q = nn.MaxPool2d(self.kernel_size, self.strides, padding=1)
         P_Q = torch.abs(P-Q)
@@ -23,7 +23,7 @@ class SmoothStepFunction(nn.Module):
         self.threshold = threshold
         self.beta = beta
 
-    def call(self, inputs):
+    def forward(self, inputs):
         """
         input: 4D Tensor (b_size, weight, high, f_maps)
         output: 3D Tensor (b_size, sum_of_w_AND_h, f_maps)
@@ -38,7 +38,7 @@ class StepFunction(nn.Module):
         self.threshold = threshold
         super(StepFunction, self).__init__(*args, **kwargs)
 
-    def call(self, inputs, **kwargs):
+    def forward(self, inputs, **kwargs):
         """
         input: 4D Tensor (b_size, weight, high, f_maps)
         output: 3D Tensor (b_size, sum_of_w_AND_h, f_maps)
@@ -51,7 +51,7 @@ class GlobalSumPooling2D(nn.Module):
     def __init__(self, *args, **kwargs):
         super(GlobalSumPooling2D, self).__init__(*args, **kwargs)
 
-    def call(self, inputs):
+    def forward(self, inputs):
         """
         input: 4D Tensor (b_size, width, height, f_maps)
         output: 3D Tensor (b_size, sum_of_w_&_h, f_maps)

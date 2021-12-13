@@ -166,14 +166,6 @@ class ClassificationModel(nn.Module):
 
         return out_middle1, out_middle2, out_middle3, out_middle4, out, out_final
 
-        # # out is B x C x W x H, with C = n_classes + n_anchors
-        # out1 = out.permute(0, 2, 3, 1)
-        #
-        # batch_size, width, height, channels = out1.shape
-        # out2 = out1.view(batch_size, width, height, self.num_anchors, self.num_classes)
-        # return out2.contiguous().view(x.shape[0], -1, self.num_classes)
-
-
 
 
 class ResNet(nn.Module):
@@ -257,14 +249,9 @@ class ResNet(nn.Module):
             if isinstance(layer, nn.BatchNorm2d):
                 layer.eval()
 
-    def forward(self, inputs):
+    def forward(self, input):
 
-        if self.training:
-            img_batch, annotations = inputs
-        else:
-            img_batch = inputs
-
-        x = self.conv1(img_batch)
+        x = self.conv1(input)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
@@ -289,13 +276,7 @@ class ResNet(nn.Module):
         reg_features = torch.cat(GAP_on_final_conv, out_final)
         final_reg_output = self.final_reg(reg_features)
 
-        if self.training:
-            mid_loss1 =  self.focal_DRN_loss(out_middle1, annotations[0])
-            mid_loss2 =  self.focal_DRN_loss(out_middle2, annotations[1])
-            mid_loss3 =  self.focal_DRN_loss(out_middle3, annotations[2])
-            mid_loss4 =  self.focal_DRN_loss(out_middle4, annotations[3])
-            reg_loss =  self.reg_loss_func(final_reg_output, annotations[4])
-            return mid_loss1, mid_loss2, mid_loss3, mid_loss4, reg_loss
+        return [out_middle1, out_middle2, out_middle3, out_middle4], final_reg_output
 
         # else:
         #     transformed_anchors = self.regressBoxes(anchors, regression)
@@ -346,6 +327,6 @@ def resnet50(args, num_classes, pretrained=False, **kwargs):
     """
     model = ResNet(num_classes, Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet50'], model_dir=args.save_downloaded_weights), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 

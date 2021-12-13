@@ -6,7 +6,7 @@ import argparse
 from counters.MSR_DRN.models import DRN
 from torch.utils.data import DataLoader
 from counters.MSR_DRN.utils.dataloader import CSV_OC
-
+from counters.MSR_DRN.bin.train_loop import train_MSR_DRN
 
 
 def parse_args():
@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mae', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
-    parser.add_argument('-o', '--optim', type=str, default='sgd', help='choose optimizer adam / adamw / sgd')
+    parser.add_argument('-o', '--optim', type=str, default='adam', help='choose optimizer adam / adamw / sgd')
     parser.add_argument('-ve', '--val_interval', type=int, default=2, help='run model validation every X epochs')
     parser.add_argument('--es_patience', type=int, default=0,
                         help='Early stopping\'s parameter: number of epochs with no improvement after which training will be stopped. Set to 0 to disable this technique.')
@@ -45,14 +45,37 @@ def main(args):
 
     train_dataset_params = {'batch_size': args.batch_size, 'shuffle': True, 'num_workers': 0}
     # train dataset loader
-    base_dir = os.path.join(args.ROOT_DIR, args.data)
-    csv_ON_path = os.path.join(base_dir, 'train', args.data + '_Train.csv')
-    csv_OC_path = os.path.join(base_dir, 'train', args.data + '_Train_leaf_location.csv')
+    train_base_dir = os.path.join(args.ROOT_DIR, args.data, 'train')
+    train_csv_ON_path = os.path.join(train_base_dir, args.data + '_Train.csv')
+    train_csv_OC_path = os.path.join(train_base_dir, args.data + '_Train_leaf_location.csv')
     train_dataset = DataLoader(
-        CSV_OC(csv_ON_path, csv_OC_path, base_dir, 320),
+        CSV_OC(train_csv_ON_path, train_csv_OC_path, train_base_dir, 800),
         **train_dataset_params)
-
+    val_base_dir = os.path.join(args.ROOT_DIR, args.data, 'val')
+    val_csv_ON_path = os.path.join(val_base_dir, args.data + '_Val.csv')
+    val_csv_OC_path = os.path.join(val_base_dir, args.data + '_Val_leaf_location.csv')
+    val_dataset = DataLoader(
+        CSV_OC(val_csv_ON_path, val_csv_OC_path, val_base_dir, 800),
+        **train_dataset_params)
     model = DRN.resnet50(args, 1, True)
+
+    # define loss function
+    if args.criteria == 'mse':
+        count_loss_func = torch.nn.MSELoss(reduction='mean')
+    elif args.criteria == 'mae':
+        count_loss_func = torch.nn.L1Loss(reduction='mean')
+
+    if args.optim == 'adamw':
+        optimizer = torch.optim.AdamW(model.parameters(), args.lr)
+    elif args.optim == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), args.lr)
+    elif args.optim == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=0.9, nesterov=True)
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
+
+    #train loop
+    train_MSR_DRN(args, train_dataset, val_dataset, model, count_loss_func, optimizer, scheduler)
 
 if __name__ == '__main__':
     args = parse_args()

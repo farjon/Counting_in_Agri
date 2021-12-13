@@ -11,7 +11,7 @@
 path: C:/Users/owner/PycharmProjects/Counting_in_Agri/Data/Banana/yolo  # dataset root dir
 train: train  # train images (relative to 'path')
 val: val     # val images (relative to 'path')
-test: test    # test images (relative to 'path')
+test: test
 
 # Classes
 nc: 1  # number of classes
