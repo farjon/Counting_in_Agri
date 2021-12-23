@@ -21,14 +21,21 @@ import skimage
 from PIL import Image
 
 class CSV_OC(Dataset):
-    def __init__(self, csv_ON, csv_OC, base_dir, input_size_size, transform=False):
+    def __init__(self,
+                 csv_ON,
+                 csv_OC,
+                 base_dir,
+                 transform=False,
+                 min_side = 800,
+                 max_side = 1333
+                 ):
         super(CSV_OC, self).__init__()
         self.image_ON = {}
         self.image_OC = {}
         self.base_dir = base_dir
-        self.input_size_size = input_size_size
         self.transform = transform
-
+        self.min_side = min_side
+        self.max_side = max_side
         if transform:
             self.transforamtion_list = [
                 transforms.RandomRotation(20),
@@ -80,9 +87,9 @@ class CSV_OC(Dataset):
         assert count == centers.size(0), 'the number of centers is different from the number of objects'
 
         # preprocess image and annotations
-        img, scale_x, scale_y = self._resize(img, self.input_size_size)
-        centers[:, 0] *= scale_x
-        centers[:, 1] *= scale_y
+        img, scale = self._resize(img)
+        centers[:, 0] *= scale
+        centers[:, 1] *= scale
 
 
         img = transforms.PILToTensor()(img)
@@ -124,21 +131,40 @@ class CSV_OC(Dataset):
         return annotations
 
     def _random_transform_rbg_centers_images(self, image, centers):
-            print('staring without annotations due to the centers location')
+            # TODO - print('staring without transformations due to the centers location')
             return image, centers
 
-    def _resize(self, image, side_size):
-        rows, cols = image.size
+    # def _resize(self, image, side_size):
+    #     rows, cols = image.size
+    #
+    #     # rescale the image so the smallest side is min_side
+    #     scale_y = side_size / rows
+    #     # if largest_side * scale > max_side:
+    #     scale_x = side_size / cols
+    #
+    #     # resize the image with the computed scale
+    #     img = image.resize((side_size, side_size))
+    #
+    #     return img, scale_x, scale_y
+
+    def _resize(self, img):
+        rows, cols = img.size
+
+        smallest_side = min(rows, cols)
 
         # rescale the image so the smallest side is min_side
-        scale_y = side_size / rows
-        # if largest_side * scale > max_side:
-        scale_x = side_size / cols
+        scale = self.min_side / smallest_side
+
+        # check if the largest side is now greater than max_side, which can happen
+        # when images have a large aspect ratio
+        largest_side = max(rows, cols)
+        if largest_side * scale > self.max_side:
+            scale = self.max_side / largest_side
 
         # resize the image with the computed scale
-        img = image.resize((side_size, side_size))
+        img = img.resize((int(rows*scale), int(cols*scale)))
 
-        return img, scale_x, scale_y
+        return img, scale
 
 
     def __len__(self):

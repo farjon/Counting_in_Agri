@@ -11,10 +11,10 @@ class SpatialNMS(nn.Module):
 
     def forward(self, inputs):
         P = inputs
-        Q = nn.MaxPool2d(self.kernel_size, self.strides, padding=1)
+        Q = nn.MaxPool2d(self.kernel_size, self.strides, padding=1)(P)
         P_Q = torch.abs(P-Q)
         exp_P_Q = torch.exp(-P_Q * self.beta)
-        P2 = torch.mul([P,exp_P_Q])
+        P2 = P.mul(exp_P_Q)
         return P2
 
 class SmoothStepFunction(nn.Module):
@@ -56,4 +56,4 @@ class GlobalSumPooling2D(nn.Module):
         input: 4D Tensor (b_size, width, height, f_maps)
         output: 3D Tensor (b_size, sum_of_w_&_h, f_maps)
         """
-        return torch.sum(inputs, (1,2))
+        return torch.sum(inputs, (2,3))

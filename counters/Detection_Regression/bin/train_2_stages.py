@@ -213,7 +213,7 @@ def main(args):
         yolo_infer_args = yolo_infer_args.parse_args()
         yolo_infer_args.project = os.path.join(args.ROOT_DIR, 'Results', 'detect', 'yolo')
         os.makedirs(yolo_infer_args.project, exist_ok=True)
-        yolo_infer_args.name = args.exp_number
+        yolo_infer_args.name = 'exp'
         yolo_infer_args.weights = os.path.join(args.save_trained_models, yolo_det_args.name, 'weights', 'best.pt')
         yolo_infer_args.source = os.path.join(args.data_path, 'test')
         yolo_infer_args.conf_thres = 0.25

@@ -17,11 +17,12 @@ def parse_args():
     # --------------------------- Training Arguments -----------------------
     parser.add_argument('-m', '--model_type', type=str, default='DRN', help='choose a model variant - DRN / MSR')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='only works with batch size = 1')
-    parser.add_argument('-e', '--epochs', type=int, default=1, help='number of epochs for training')
+    parser.add_argument('-e', '--epochs', type=int, default=100, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mae', help='criteria can be mse / mae')
-    parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
+    parser.add_argument('-lr', '--lr', type=float, default=1e-5, help='set learning rate')
     parser.add_argument('-o', '--optim', type=str, default='adam', help='choose optimizer adam / adamw / sgd')
+    parser.add_argument('-mm', '--monitor_metric', type=str, default='absDiC', help='choose what metric to monitor absDiC / agreement / MSE')
     parser.add_argument('-ve', '--val_interval', type=int, default=2, help='run model validation every X epochs')
     parser.add_argument('--es_patience', type=int, default=0,
                         help='Early stopping\'s parameter: number of epochs with no improvement after which training will be stopped. Set to 0 to disable this technique.')
@@ -49,13 +50,13 @@ def main(args):
     train_csv_ON_path = os.path.join(train_base_dir, args.data + '_Train.csv')
     train_csv_OC_path = os.path.join(train_base_dir, args.data + '_Train_leaf_location.csv')
     train_dataset = DataLoader(
-        CSV_OC(train_csv_ON_path, train_csv_OC_path, train_base_dir, 800),
+        CSV_OC(train_csv_ON_path, train_csv_OC_path, train_base_dir),
         **train_dataset_params)
     val_base_dir = os.path.join(args.ROOT_DIR, args.data, 'val')
     val_csv_ON_path = os.path.join(val_base_dir, args.data + '_Val.csv')
     val_csv_OC_path = os.path.join(val_base_dir, args.data + '_Val_leaf_location.csv')
     val_dataset = DataLoader(
-        CSV_OC(val_csv_ON_path, val_csv_OC_path, val_base_dir, 800),
+        CSV_OC(val_csv_ON_path, val_csv_OC_path, val_base_dir),
         **train_dataset_params)
     model = DRN.resnet50(args, 1, True)
 
