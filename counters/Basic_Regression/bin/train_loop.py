@@ -3,9 +3,11 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import datetime
+import wandb
 from tensorboardX import SummaryWriter
 
 def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer, scheduler):
+
     device = args.device
     model.to(device)
     model.train()
@@ -17,7 +19,7 @@ def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer
     step = 0
 
     for epoch in range(args.epochs):
-        epoch_loss = []
+        running_loss = 0
         loop = tqdm(enumerate(train_dataset), total = len(train_dataset), leave=False)
         for batch_idx, (inputs, labels) in loop:
             inputs, labels = inputs.to(device), labels.to(device)
@@ -26,14 +28,16 @@ def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer
                 param.grad = None
             outputs = model(inputs)
             loss = loss_func(outputs, labels)
-            epoch_loss.append(loss.item())
+            running_loss += loss.detach() * inputs.size(0)
             writer.add_scalars('Loss', {'train': loss.item()}, step)
 
             loss.backward()
             optimizer.step()
             step += 1
 
-        scheduler.step(np.mean(epoch_loss))
+        epoch_loss = running_loss / len(train_dataset)
+        wandb.log({'epoch_loss': epoch_loss.item(), 'LR': optimizer.param_groups[0]['lr']})
+        scheduler.step(epoch_loss.item())
 
         if epoch % args.val_interval == 0:
             model.eval()
@@ -58,6 +62,8 @@ def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer
                 best_epoch = epoch
                 save_model_path = os.path.join(args.save_checkpoint_path, f'best_{args.model_type}_model.pth')
                 torch.save(model.state_dict(), save_model_path)
+
+            wandb.log({'val_loss': mean_val_loss})
 
             model.train()
 
