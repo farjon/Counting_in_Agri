@@ -5,8 +5,11 @@
 **/EfficientDet_Pytorch/
 **/detectron2_windows/
 **/pytorch_retinanet/
+**/tasselnetv2plus/
 **/Data/
 **/notebooks/
 **/Logs/
 **/Trained_Models/
+**/wandb/
+**/Results/
 **__pycache__/
