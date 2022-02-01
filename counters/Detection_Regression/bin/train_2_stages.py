@@ -6,20 +6,21 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Banana', help='choose a dataset')
-    parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
-    parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
-    parser.add_argument('-p', '--padding', type=int, default=20, help='padding size in case of splitting')
+    parser.add_argument('-d', '--data', type=str, default='AppleFlowers', help='choose a dataset')
+    parser.add_argument('-si', '--split_images', type=bool, default=True, help='should we split the images into tiles')
+    parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
+    parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
-    parser.add_argument('-det', '--detector', type=str, default='yolov5_s', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
+    parser.add_argument('-det', '--detector', type=str, default='efficientDet_0', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
-    parser.add_argument('-e', '--epochs', type=int, default=1, help='number of epochs for training')
+    parser.add_argument('-e', '--epochs', type=int, default=50, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
     parser.add_argument('-o', '--optim', type=str, default='sgd', help='choose optimizer adam / adamw / sgd')
     parser.add_argument('-ve', '--val_interval', type=int, default=2, help='run model validation every X epochs')
+    parser.add_argument('-se', '--save_interval', type=int, default=100, help='save checkpoint every X steps')
     parser.add_argument('-dt', '--det_test_thresh', type=float, default=0.2, help='detection threshold (for test), defualt is 0.2')
     parser.add_argument('-iou', '--iou_threshold', type=float, default=0.2, help='iou threshold (for test), defualt is 0.2')
     parser.add_argument('--es_patience', type=int, default=0,
@@ -45,7 +46,7 @@ def main(args):
         labels_format = 'yolo'
 
     if args.split_images:
-        from utils.split_raw_images_anno_csv import split_to_tiles
+        from utils.split_raw_images_anno_coco import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
         #TODO - make sure that the split function works on other data formats
@@ -132,7 +133,7 @@ def main(args):
         eff_det_args.optim = args.optim
         eff_det_args.num_epochs = args.epochs
         eff_det_args.val_interval = args.val_interval
-        eff_det_args.save_interval = args.epochs
+        eff_det_args.save_interval = args.save_interval
         eff_det_args.es_patience = args.es_patience
         eff_det_args.data_path = args.data_path
         eff_det_args.log_path = args.log_path
@@ -149,7 +150,7 @@ def main(args):
         # model will be stored at eff_det_args.saved_path
         # under the name 'args.data/'efficientdet-d{opt.compound_coef}_{best_epoch}.pth''
         model_path = os.path.join(args.data, f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
-        outputs = test_eff_on_folder(args, model_path, test_folder)
+        outputs = test_eff_on_folder(eff_det_args, model_path, test_folder)
 
 
     elif args.detector.split('_')[0] == 'yolov5':
@@ -166,8 +167,8 @@ def main(args):
         yolo_det_args = yolo_det_args.parse_args()
         yolo_det_args.cfg = cfg_path
         yolo_det_args.imgsz = 640
-        yolo_det_args.batch_size = 2
-        yolo_det_args.epochs = 5
+        yolo_det_args.batch_size = args.batch_size
+        yolo_det_args.epochs = args.epochs
         yolo_det_args.data = data_yaml_path
         yolo_det_args.cfg = cfg_path
         yolo_det_args.weights = path_to_pretrained_model

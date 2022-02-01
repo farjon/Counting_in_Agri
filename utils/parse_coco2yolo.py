@@ -20,7 +20,7 @@ def coco_label_to_yolo_style(coco_style, im_width, im_height):
     x_center_norm = (coco_style['bbox'][0] + int(coco_style['bbox'][2]/2))/im_width
     y_center_norm = (coco_style['bbox'][1] + int(coco_style['bbox'][3]/2))/im_height
     w_norm = coco_style['bbox'][2] / im_width
-    h_norm = coco_style['bbox'][3] /im_height
+    h_norm = coco_style['bbox'][3] / im_height
     yolo_style = [x_center_norm, y_center_norm, w_norm, h_norm]
     return yolo_style
 
@@ -29,7 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Annotations parser from VOC to COCO')
     # --------------------------- Data Arguments ---------------------------
     # parser.add_argument('-r', '--ROOT_DIR', type=str, help='path to data root folder')
-    parser.add_argument('-d', '--data', type=str, default='Banana', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Melons', help='choose a dataset')
 
     args = parser.parse_args()
     return args
@@ -44,7 +44,7 @@ def main(args):
     # os.makedirs(path_to_yolo_images, exist_ok=True)
     # os.makedirs(path_to_yolo_labels, exist_ok=True)
 
-    sets = ['train', 'val', 'test']
+    sets = ['train', 'val']
     for current_set in sets:
         path_to_set_yolo = os.path.join(path_to_yolo, current_set)
         os.makedirs(path_to_set_yolo, exist_ok=True)
