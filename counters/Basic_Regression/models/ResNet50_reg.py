@@ -2,6 +2,7 @@ import os
 import torch
 from torchvision.models import resnet50
 
+
 class ResNet_50_regressor(torch.nn.Module):
     def __init__(self):
         super(ResNet_50_regressor, self).__init__()
