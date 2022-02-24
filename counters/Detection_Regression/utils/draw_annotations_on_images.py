@@ -13,7 +13,7 @@ from detectron2_windows.detectron2.data.datasets import register_coco_instances
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='AppleFlowers_split', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
     parser.add_argument('-o', '--output_path', type=str, default='', help='path to save images, defualt is NONE')
     args = parser.parse_args()
     return args
@@ -23,9 +23,9 @@ def main(args):
     args.output_path = os.path.join(args.data_path, 'images_with_annotations')
     os.makedirs(args.output_path, exist_ok=True)
     # register_coco_instances : name, metadata, json_file, image_root
-    register_coco_instances("train", {}, f'{args.data_path}/coco/annotations/instances_train.json', f'{args.data_path}/coco/train')
-    register_coco_instances("val", {}, f'{args.data_path}/coco/annotations/instances_val.json', f'{args.data_path}/coco/val')
-    register_coco_instances("test", {}, f'{args.data_path}/coco/annotations/instances_test.json', f'{args.data_path}/coco/test')
+    register_coco_instances("train", {}, f'{args.data_path}\\coco\\annotations\\instances_train.json', f'{args.data_path}\\coco\\train')
+    register_coco_instances("val", {}, f'{args.data_path}\\coco\\annotations\\instances_val.json', f'{args.data_path}\\coco\\val')
+    register_coco_instances("test", {}, f'{args.data_path}\\coco\\annotations\\instances_test.json', f'{args.data_path}\\coco\\test')
 
     sets_to_vis = ['train', 'val', 'test']
 

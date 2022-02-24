@@ -34,6 +34,5 @@ pip install -r requirements.txt
 ```
 pip install wandb
 ```
-
 # That's it - you now have yolov5 
 

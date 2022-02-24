@@ -4,24 +4,24 @@ import json
 from glob import glob
 import argparse
 from PIL import Image
+import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Annotations parser from VOC to COCO')
     # --------------------------- Data Arguments ---------------------------
-    # parser.add_argument('-r', '--ROOT_DIR', type=str, help='path to data root folder')
-    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='CherryTomato', help='choose a dataset')
 
     args = parser.parse_args()
     return args
 
 def main(args):
-    sets = ['train', 'val']
+    sets = ['train', 'val', 'test']
     for current_set in sets:
         data_dir = os.path.join(args.ROOT_DIR, args.data, 'voc', current_set)
         output_dir = os.path.join(args.ROOT_DIR, args.data, 'coco', current_set)
         os.makedirs(output_dir, exist_ok=True)
 
-        json_file = os.path.join(output_dir, current_set +'.json')
+        json_file = os.path.join(args.ROOT_DIR, args.data, 'coco','annotations', 'instances_' + current_set + '.json')
 
         categories = [{'supercategory': None, 'id': 1, 'name': args.data}]
         images = []
@@ -29,11 +29,10 @@ def main(args):
         image_id = 0
         annotations_id = 0
         for xml_file in glob(os.path.join(data_dir, '*.xml')):
-            image_path = xml_file[:-4] + '.JPG'
+            image_path = xml_file[:-4] + '.png'
             image_name = image_path.split('\\')[-1]
             image_new_path = os.path.join(output_dir, image_name)
-            im = Image.open(image_path)
-            im.save(image_new_path)
+            shutil.copyfile(image_path, image_new_path)
             tree = ET.parse(xml_file)
             root = tree.getroot()
             width = int(root.find('size').find('width').text)
