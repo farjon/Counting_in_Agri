@@ -6,8 +6,8 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='AppleFlowers', help='choose a dataset')
-    parser.add_argument('-si', '--split_images', type=bool, default=True, help='should we split the images into tiles')
+    parser.add_argument('-d', '--data', type=str, default='CherryTomato', help='choose a dataset')
+    parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
@@ -150,7 +150,7 @@ def main(args):
         # model will be stored at eff_det_args.saved_path
         # under the name 'args.data/'efficientdet-d{opt.compound_coef}_{best_epoch}.pth''
         model_path = os.path.join(args.data, f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
-        outputs = test_eff_on_folder(eff_det_args, model_path, test_folder)
+        # outputs = test_eff_on_folder(eff_det_args, model_path, test_folder)
 
 
     elif args.detector.split('_')[0] == 'yolov5':
