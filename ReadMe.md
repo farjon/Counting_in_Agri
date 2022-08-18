@@ -18,7 +18,7 @@ Dataset_dir\
 
 ### yolov5
 To train the yolov5, two .yaml files should be prepard
-1. a 'yolo5i_Dataset.yaml' where i = {s,m,l,x}, and 'Dataset' is your dataset name
+1. a 'yolo5_i_Dataset.yaml' where i = {s,m,l,x}, and 'Dataset' is your dataset name
 2. a 'Dataset.yaml' where 'Dataset' is your dataset name
 
 They should contain the information about your dataset\
