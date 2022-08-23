@@ -66,7 +66,7 @@ def train_MSR_DRN(args, train_dataset, val_dataset, model, count_loss_func, opti
             if metric < best_score:
                 best_score = metric
                 best_epoch = epoch
-                save_model_path = os.path.join(args.save_checkpoint_path, f'best_{args.model_type}_model.pth')
+                save_model_path = os.path.join(args.save_trained_models, f'{args.model_type}_{args.exp_number}', f'best_{args.model_type}_model.pth')
                 torch.save(model.state_dict(), save_model_path)
             model.train()
 

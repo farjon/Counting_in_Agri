@@ -28,7 +28,7 @@ def create_gausian_mask(center_point, nCols, nRows, radius = (5,5), q = 99):
     p = p / np.max(p)
     if not np.isfinite(p).all() or not np.isfinite(p).all():
         print('divide by zero')
-    return torch.from_numpy(p)
+    return torch.from_numpy(p).float()
 
 
 

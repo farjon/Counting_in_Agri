@@ -126,7 +126,7 @@ class CSV_OC(Dataset):
 
             gaussian_map = create_gausian_mask(centers[i, :2], output_shape[1], output_shape[0], radius)
             # each center point in the GT will be 1 in the annotation map
-            annotations = torch.maximum(annotations, gaussian_map)
+            annotations = torch.max(annotations, gaussian_map)
 
         return annotations
 

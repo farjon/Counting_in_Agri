@@ -30,10 +30,10 @@ def calc_metrices(gt_pred_pairs, monitor_metric):
     agreement_list = [1 for x,y in zip(gt_pred_pairs['gt'], gt_pred_pairs['pred']) if x == y]
     MSE_list = [torch.pow(x-y, 2) for x,y in zip(gt_pred_pairs['gt'], gt_pred_pairs['pred'])]
 
-    DiC = torch.mean(torch.from_numpy(np.array(DiC_list)))
-    absDiC = torch.mean(torch.from_numpy(np.array(absDiC_list)))
-    agreement = torch.mean(torch.from_numpy(np.array(agreement_list)))
-    MSE = torch.mean(torch.from_numpy(np.array(MSE_list)))
+    DiC = torch.mean(torch.tensor(DiC_list))
+    absDiC = torch.mean(torch.tensor(absDiC_list))
+    agreement = torch.mean(torch.tensor(agreement_list))
+    MSE = torch.mean(torch.tensor(MSE_list))
 
     print(f'DiC: {DiC}, absDiC: {absDiC}, %: {agreement}, MSE: {MSE}')
 
