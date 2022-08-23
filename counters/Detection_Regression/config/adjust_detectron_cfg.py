@@ -1,4 +1,3 @@
-import os
 from detectron2_windows.detectron2.config import get_cfg
 from detectron2_windows.detectron2 import model_zoo
 
@@ -12,7 +11,7 @@ def create_cfg(args):
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(f"COCO-Detection/{model_name}")  # Let training initialize from model zoo
     cfg.SOLVER.IMS_PER_BATCH = 1
     cfg.SOLVER.BASE_LR = 0.001
-    cfg.SOLVER.WARMUP_ITERS = 1000
+    cfg.SOLVER.WARMUP_ITERS = 50
     cfg.SOLVER.MAX_ITER = 1500 #adjust up if val mAP is still rising, adjust down if overfit
     cfg.SOLVER.STEPS = (1000, 1500)
     cfg.SOLVER.GAMMA = 0.05

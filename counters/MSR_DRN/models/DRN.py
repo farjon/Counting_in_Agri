@@ -20,12 +20,10 @@ class PyramidFeatures(nn.Module):
 
         # upsample C5 to get P5 from the FPN paper
         self.P5_1 = nn.Conv2d(C5_size, feature_size, kernel_size=1, stride=1, padding=0)
-        self.P5_upsampled = nn.Upsample(scale_factor=2, mode='nearest')
         self.P5_2 = nn.Conv2d(feature_size, feature_size, kernel_size=3, stride=1, padding=1)
 
         # add P5 elementwise to C4
         self.P4_1 = nn.Conv2d(C4_size, feature_size, kernel_size=1, stride=1, padding=0)
-        self.P4_upsampled = nn.Upsample(scale_factor=2, mode='nearest')
         self.P4_2 = nn.Conv2d(feature_size, feature_size, kernel_size=3, stride=1, padding=1)
 
         # add P4 elementwise to C3
@@ -43,12 +41,12 @@ class PyramidFeatures(nn.Module):
         C3, C4, C5 = inputs
 
         P5_x = self.P5_1(C5)
-        P5_upsampled_x = self.P5_upsampled(P5_x)
+        P5_upsampled_x = nn.Upsample(size=(C4.size(-2), C4.size(-1)), mode='nearest')(P5_x)
         P5_x = self.P5_2(P5_x)
 
         P4_x = self.P4_1(C4)
         P4_x = P5_upsampled_x + P4_x
-        P4_upsampled_x = self.P4_upsampled(P4_x)
+        P4_upsampled_x = nn.Upsample(size=(C3.size(-2), C3.size(-1)), mode='nearest')(P4_x)
         P4_x = self.P4_2(P4_x)
 
         P3_x = self.P3_1(C3)
@@ -112,28 +110,28 @@ class ClassificationModel(nn.Module):
         self.conv1 = nn.Conv2d(num_features_in, feature_size, kernel_size=3, padding=1)
         self.act1 = nn.ReLU()
 
-        self.mid_output1 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=1)
+        self.mid_output1 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=0)
         self.mid_act1 = nn.ReLU()
 
         self.conv2 = nn.Conv2d(feature_size, feature_size, kernel_size=3, padding=1)
         self.act2 = nn.ReLU()
 
-        self.mid_output2 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=1)
+        self.mid_output2 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=0)
         self.mid_act2 = nn.ReLU()
 
         self.conv3 = nn.Conv2d(feature_size, feature_size, kernel_size=3, padding=1)
         self.act3 = nn.ReLU()
 
-        self.mid_output3 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=1)
+        self.mid_output3 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=0)
         self.mid_act3 = nn.ReLU()
 
         self.conv4 = nn.Conv2d(feature_size, feature_size, kernel_size=3, padding=1)
         self.act4 = nn.ReLU()
 
-        self.mid_output4 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=1)
+        self.mid_output4 = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=0)
         self.mid_act4 = nn.ReLU()
 
-        self.output = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=1)
+        self.output = nn.Conv2d(feature_size, num_classes, kernel_size=1, padding=0)
         self.output_act = nn.ReLU()
 
     def forward(self, x):
@@ -161,18 +159,10 @@ class ClassificationModel(nn.Module):
         out_middle4 = self.mid_output4(out)
         out_middle4 = self.mid_act4(out_middle4)
 
-        out = self.output(out)
-        out_final = self.output_act(out)
+        out_final = self.output(out)
+        out_final = self.output_act(out_final)
 
         return out_middle1, out_middle2, out_middle3, out_middle4, out, out_final
-
-        # # out is B x C x W x H, with C = n_classes + n_anchors
-        # out1 = out.permute(0, 2, 3, 1)
-        #
-        # batch_size, width, height, channels = out1.shape
-        # out2 = out1.view(batch_size, width, height, self.num_anchors, self.num_classes)
-        # return out2.contiguous().view(x.shape[0], -1, self.num_classes)
-
 
 
 
@@ -201,8 +191,7 @@ class ResNet(nn.Module):
 
         self.fpn = PyramidFeatures(fpn_sizes[0], fpn_sizes[1], fpn_sizes[2])
 
-        # self.regressionModel = RegressionModel(256)
-        self.classificationModel = ClassificationModel(256, num_classes=num_classes)
+        self.classificationModel = ClassificationModel(self.fpn.P3_2.out_channels, num_classes=num_classes)
 
         self.STF_1 = SmoothStepFunction(threshold=0.4, beta=1)
         self.SNMS = SpatialNMS(kernel_size=3, stride=1, beta=100)
@@ -257,14 +246,9 @@ class ResNet(nn.Module):
             if isinstance(layer, nn.BatchNorm2d):
                 layer.eval()
 
-    def forward(self, inputs):
+    def forward(self, input):
 
-        if self.training:
-            img_batch, annotations = inputs
-        else:
-            img_batch = inputs
-
-        x = self.conv1(img_batch)
+        x = self.conv1(input)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
@@ -279,23 +263,17 @@ class ResNet(nn.Module):
         # out_middle1, out_middle2, out_middle3, out_middle4, out1
         out_middle1, out_middle2, out_middle3, out_middle4, out, out_final = self.classificationModel(P3)
 
-        GAP_on_final_conv = torch.nn.AvgPool2d(out)
+        GAP_on_final_conv = torch.nn.AvgPool2d(kernel_size=(out.size(-2), out.size(-1)))(out)
 
         out_final = self.STF_1(out_final)
         out_final = self.SNMS(out_final)
         out_final = self.STF_2(out_final)
         out_final = self.GSP(out_final)
 
-        reg_features = torch.cat(GAP_on_final_conv, out_final)
+        reg_features = torch.hstack((GAP_on_final_conv.squeeze(3).squeeze(2), out_final))
         final_reg_output = self.final_reg(reg_features)
 
-        if self.training:
-            mid_loss1 =  self.focal_DRN_loss(out_middle1, annotations[0])
-            mid_loss2 =  self.focal_DRN_loss(out_middle2, annotations[1])
-            mid_loss3 =  self.focal_DRN_loss(out_middle3, annotations[2])
-            mid_loss4 =  self.focal_DRN_loss(out_middle4, annotations[3])
-            reg_loss =  self.reg_loss_func(final_reg_output, annotations[4])
-            return mid_loss1, mid_loss2, mid_loss3, mid_loss4, reg_loss
+        return [out_middle1, out_middle2, out_middle3, out_middle4], final_reg_output[0]
 
         # else:
         #     transformed_anchors = self.regressBoxes(anchors, regression)
@@ -346,6 +324,6 @@ def resnet50(args, num_classes, pretrained=False, **kwargs):
     """
     model = ResNet(num_classes, Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet50'], model_dir=args.save_downloaded_weights), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 

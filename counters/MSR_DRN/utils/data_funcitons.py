@@ -1,6 +1,7 @@
 import numpy as np
+import torch
 
-def create_gausian_mask(center_point, nCols, nRows, q = 99, radius = (5,5)):
+def create_gausian_mask(center_point, nCols, nRows, radius = (5,5), q = 99):
     '''
     create_gausian_mask creates a gaussian mask to be used as GT annotations for the detection-based counter
     :param center_point:
@@ -17,8 +18,8 @@ def create_gausian_mask(center_point, nCols, nRows, q = 99, radius = (5,5)):
     x = np.tile(range(nCols), (nRows,1))
     y = np.tile(np.reshape(range(nRows),(nRows,1)),(1,nCols))
 
-    x2 = (((x - round(center_point[0]))*s) / radius[0]) ** 2
-    y2 = (((y - round(center_point[1]))*s) / radius[1]) ** 2
+    x2 = (((x - round(center_point[0].item()))*s) / radius[0]) ** 2
+    y2 = (((y - round(center_point[1].item()))*s) / radius[1]) ** 2
 
     p = np.exp(-0.5 * (x2 + y2))
 
@@ -27,7 +28,7 @@ def create_gausian_mask(center_point, nCols, nRows, q = 99, radius = (5,5)):
     p = p / np.max(p)
     if not np.isfinite(p).all() or not np.isfinite(p).all():
         print('divide by zero')
-    return p
+    return torch.from_numpy(p).float()
 
 
 
@@ -52,7 +53,7 @@ def read_annotations_ON(csv_reader):
         if int(num_of_objects) <= 0:
             raise ValueError('num_of_objects must be higher than 0 but is {}'.format(num_of_objects))
 
-        result[img_file].append({'num_of_objects': num_of_objects})
+        result[img_file] = num_of_objects
     return result
 
 
