@@ -1,5 +1,6 @@
 import os
 import torch
+import torchvision.models
 import torchvision.models as models
 
 class RegressionNetwork(torch.nn.Module):

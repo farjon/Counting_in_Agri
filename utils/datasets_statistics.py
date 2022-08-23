@@ -1,12 +1,14 @@
 import os
 import json
 import argparse
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
+    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
     parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
     parser.add_argument('-lf', '--labels_format', type=str, default='coco', help='labels format can be csv / coco (.json)')
     parser.add_argument('-s', '--set_split', type=bool, default=True, help='state if the dataset is already split to train-val-test sets')
@@ -56,8 +58,9 @@ def object_per_image_stats(sets_information, dataset_stats):
     for current_set in sets_information:
         print(f'analyzing {current_set} set')
         for i, row in sets_information[current_set][1].iterrows():
-            labels_for_image = sets_information[current_set][0].loc[sets_information[current_set][0]['image_id'] == row['id']]
-            number_of_objects_for_image = labels_for_image.shape[0]
+            image_id = row['id']
+            labels_for_image = [x for j, x in sets_information[current_set][0].iterrows() if x['image_id'] == image_id]
+            number_of_objects_for_image = len(labels_for_image)
             image_objects_pairs.append(number_of_objects_for_image)
             if number_of_objects_for_image > max_OPI:
                 max_OPI = number_of_objects_for_image
@@ -71,7 +74,6 @@ def object_per_image_stats(sets_information, dataset_stats):
 
 def objects_images_sizes_stats(sets_information, dataset_stats):
     images_sizes = {
-        'area': [],
         'width': [],
         'height': []
     }
@@ -82,6 +84,14 @@ def objects_images_sizes_stats(sets_information, dataset_stats):
         'height': []
     }
     for current_set in sets_information:
+        set_images_sizes = {
+            'width': [],
+            'height': []
+        }
+        set_objects_sizes = {
+            'width': [],
+            'height': []
+        }
         print(f'analyzing {current_set} set')
         for i, row in sets_information[current_set][1].iterrows():
             images_sizes['area'].append(row['width']*row['height'])
@@ -128,9 +138,11 @@ def main(args):
     # object size to image size
     dataset_stats = objects_images_sizes_stats(sets_information, dataset_stats)
 
+    # overlap between objects
     for k, v in dataset_stats.items():
         print(k, v)
     # TODO - measure overlap between objects using IOU
+
 
 
 

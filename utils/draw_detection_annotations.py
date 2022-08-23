@@ -18,7 +18,7 @@ def drawrect(drawcontext, box, outline=None, width=0):
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='CherryTomato', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
     parser.add_argument('-o', '--output_path', type=str, default='', help='path to save images, defualt is NONE')
     args = parser.parse_args()
     return args
