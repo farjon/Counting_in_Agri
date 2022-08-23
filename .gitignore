@@ -16,3 +16,6 @@
 **/coco_eval/
 0.8.1'
 1.7.0'
+**/wandb/
+**/Results/
+**__pycache__/
