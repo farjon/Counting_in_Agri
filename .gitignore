@@ -7,9 +7,15 @@
 **/pytorch_retinanet/
 **/tasselnetv2plus/
 **/Data/
+**/Results/
 **/notebooks/
 **/Logs/
 **/Trained_Models/
+**__pycache__/
+**/wandb/
+**/coco_eval/
+0.8.1'
+1.7.0'
 **/wandb/
 **/Results/
 **__pycache__/

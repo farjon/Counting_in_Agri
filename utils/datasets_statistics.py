@@ -3,12 +3,13 @@ import json
 import argparse
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
     parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
     parser.add_argument('-lf', '--labels_format', type=str, default='coco', help='labels format can be csv / coco (.json)')
     parser.add_argument('-s', '--set_split', type=bool, default=True, help='state if the dataset is already split to train-val-test sets')
     args = parser.parse_args()
@@ -76,7 +77,9 @@ def objects_images_sizes_stats(sets_information, dataset_stats):
         'width': [],
         'height': []
     }
+    objects_sizes_per_image = []
     objects_sizes = {
+        'area': [],
         'width': [],
         'height': []
     }
@@ -90,12 +93,36 @@ def objects_images_sizes_stats(sets_information, dataset_stats):
             'height': []
         }
         print(f'analyzing {current_set} set')
+        for i, row in sets_information[current_set][1].iterrows():
+            images_sizes['area'].append(row['width']*row['height'])
+            images_sizes['width'].append(row['width'])
+            images_sizes['height'].append(row['height'])
+            labels_for_image = sets_information[current_set][0].loc[sets_information[current_set][0]['image_id'] == row['id']]
+            objects_per_image_areas = labels_for_image['area'].to_list()
+            objects_sizes['area'].extend(objects_per_image_areas)
+            objects_sizes['width'].extend(labels_for_image['bbox'].str[2].to_list())
+            objects_sizes['height'].extend(labels_for_image['bbox'].str[3].to_list())
+            objects_sizes_per_image.append(objects_per_image_areas)
+    # objects average area
+    dataset_stats['objects_mean_area'] = sum(objects_sizes['area'])/len(objects_sizes['area'])
+    # images average area
+    dataset_stats['images_mean_area'] = sum(images_sizes['area'])/len(images_sizes['area'])
+    # object area / image area
+    image_object_ratio = []
+    for i in range(len(images_sizes['area'])):
+        for j in range(len(objects_sizes_per_image[i])):
+            image_object_ratio.append(objects_sizes_per_image[i][j] / images_sizes['area'][i])
+    # create and save an histogram of the ratios
+
+    return dataset_stats
 
 def main(args):
     # either coco or csv formats are load into a pandas data frame
     if args.labels_format == 'coco':
         args.ROOT_DIR = os.path.join(args.ROOT_DIR, 'coco', 'annotations')
         sets_information = load_dataset_labels_coco(args)
+    else:
+        raise ("only coco format is available, please use the parsers in the 'utils' directory")
     dataset_stats = {}
     # how many objects (in general, and in each set)
     # how many images (in general, and in each set)
@@ -112,6 +139,10 @@ def main(args):
     dataset_stats = objects_images_sizes_stats(sets_information, dataset_stats)
 
     # overlap between objects
+    for k, v in dataset_stats.items():
+        print(k, v)
+    # TODO - measure overlap between objects using IOU
+
 
 
 

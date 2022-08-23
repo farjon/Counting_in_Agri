@@ -36,9 +36,9 @@ def split_to_tiles(args, tiles=10, pad=30):
               'moving forward with the training process')
         return
     for current_set in set_to_split:
-        to_tile_dir = os.path.join(args.ROOT_DIR, 'Data', args.data, 'images', current_set)
-        imgs_output_dir = os.path.join(output_dir, 'images', current_set)
-        det_output_anno_dir = os.path.join(output_dir, 'detection annotations', current_set)
+        to_tile_dir = os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco', current_set)
+        imgs_output_dir = os.path.join(output_dir, 'coco', current_set)
+        det_output_anno_dir = os.path.join(output_dir, 'annotations', current_set)
         count_output_anno_dir = os.path.join(output_dir, 'regression annotations')
         os.makedirs(imgs_output_dir, exist_ok=True)
         os.makedirs(det_output_anno_dir, exist_ok=True)
@@ -47,9 +47,11 @@ def split_to_tiles(args, tiles=10, pad=30):
             'image_name': [],
             'GT_number': []
         }
-        for k, file_name in enumerate(glob(os.path.join(to_tile_dir, '*.jpg'))):
+        image_format = glob(os.path.join(to_tile_dir, '*'))[0][-3:]
+        anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco', 'annotations', 'instances_' + current_set + '.csv'))
+        for k, file_name in enumerate(glob(os.path.join(to_tile_dir, '*.'+image_format))):
             image_name = file_name.split('\\')[-1].split('.')[0] # '/' to split the path, '.' to split the ending
-            anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'Data', args.data, 'detection annotations', current_set, image_name + '.csv'))
+            # anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'Data', args.data, 'annotations', current_set, image_name + '.csv'))
             print(f'working on image {image_name}')
             sub_image_counter = 0
             im = Image.open(file_name)
