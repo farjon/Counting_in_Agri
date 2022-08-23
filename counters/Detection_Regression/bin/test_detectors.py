@@ -136,8 +136,8 @@ def test_efficientDet(args, eff_det_args, best_epoch):
 
 def test_yolov5(args, yolo_det_args):
     from yolov5.detect import run as yolov5_detect
-    from counters.Detection_Regression.utils.create_detector_args import create_yolov5_args
-    yolo_infer_args = create_yolov5_args(args, yolo_det_args)
+    from counters.Detection_Regression.utils.create_detector_args import create_yolov5_infer_args
+    yolo_infer_args = create_yolov5_infer_args(args, yolo_det_args)
     os.makedirs(yolo_infer_args.project, exist_ok=True)
     # TODO - detect.run does not return anything, create a wrapper
     yolov5_detect(**vars(yolo_infer_args))

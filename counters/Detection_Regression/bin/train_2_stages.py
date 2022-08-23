@@ -97,7 +97,8 @@ def main(args):
 
     elif args.detector.split('_')[0] == 'yolov5':
         from counters.Detection_Regression.bin.train_detectors import train_yolov5
-
+        from counters.Detection_Regression.bin.test_detectors import test_yolov5
+        train_yolov5(args)
     # Report results
 
 
