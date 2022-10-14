@@ -7,21 +7,23 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
-
+    parser.add_argument('-r', '--ROOT_DIR', type=str,
+                        default="C:\\Users\\owner\\PycharmProjects\\Counting_in_Agri\\Data",
+                        help='path to data root folder')
+    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
     args = parser.parse_args()
     return args
 
 def main(args):
-    output_dir = os.path.join(args.ROOT_DIR, args.data, 'csv')
+    output_dir = os.path.join(args.ROOT_DIR, args.data, 'regression_csv')
     os.makedirs(output_dir, exist_ok=True)
     sets = ['train', 'val', 'test']
     for current_set in sets:
         data_dir = os.path.join(args.ROOT_DIR, args.data, 'coco', current_set)
-        images_output_dir = os.path.join(args.ROOT_DIR, args.data, 'images')
+        images_output_dir = os.path.join(output_dir, 'images')
         os.makedirs(images_output_dir, exist_ok=True)
         input_file = os.path.join(args.ROOT_DIR, args.data, 'coco', 'annotations', 'instances_' + current_set + '.json')
-        output_file = os.path.join(args.ROOT_DIR, args.data, 'csv', current_set + '.csv')
+        output_file = os.path.join(output_dir, current_set + '.csv')
         current_anno_file = json.load(open(input_file))
         csv_annotations = {
             'image_name': [],
