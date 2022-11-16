@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 import keras
-from ..utils.eval_LCC import evaluate
+from counters.MSR_DRN_keras.utils.eval_LCC import evaluate
 
 #TODO - modify the evaluation function to create the nesessary outputs to evalute the LLC chalenge
 class Evaluate_LLCtype(keras.callbacks.Callback):

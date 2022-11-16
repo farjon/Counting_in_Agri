@@ -187,7 +187,7 @@ class CSVLCCGenerator(object):
         self,
         csv_leaf_number_file,
         csv_leaf_location_file,
-        option = 1,
+        option = 20,
         base_dir=None,
         transform_generator=None,
         batch_size=1,

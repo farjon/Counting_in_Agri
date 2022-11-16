@@ -20,7 +20,7 @@ class Backbone(object):
             'SmoothStepFunction1': layers.SmoothStepFunction1,
             '_smooth_l1'        : losses.smooth_l1(),
             '_focal'            : losses.focal(),
-            '_focal_gyf'        : losses.focal_gyf(),
+            '_focal_DRN'        : losses.focal_DRN(),
             '_mu_sig_gyf'       : losses.mu_sig_gyf(),
             '_mu_sig_gyf_L1'    : losses.mu_sig_gyf_L1(),
             'MLE_layer'         : layers.MLE_layer
@@ -45,21 +45,15 @@ class Backbone(object):
         raise NotImplementedError('validate method not implemented.')
 
 
-def backbone(backbone_name):
+def backbone(backbone_name, model_type):
     """ Returns a backbone object for the given backbone.
     """
     if 'resnet' in backbone_name:
         from .resnet import ResNetBackbone as b
-    elif 'mobilenet' in backbone_name:
-        from .mobilenet import MobileNetBackbone as b
-    elif 'vgg' in backbone_name:
-        from .vgg import VGGBackbone as b
-    elif 'densenet' in backbone_name:
-        from .densenet import DenseNetBackbone as b
     else:
         raise NotImplementedError('Backbone class for  \'{}\' not implemented.'.format(backbone))
 
-    return b(backbone_name)
+    return b(backbone_name, model_type)
 
 
 def load_model(filepath, backbone_name='resnet50', convert=False, nms=True):

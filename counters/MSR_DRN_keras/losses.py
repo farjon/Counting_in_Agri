@@ -79,32 +79,17 @@ def smooth_l1(sigma=3.0):
 
     return _smooth_l1
 
-#Todo - check that working
-def neural_decay(alpha=0.001):
-    def _neural_decay(y_true, y_pred):
-        a= alpha * y_pred
-        b = keras.backend.sum(keras.backend.pow(a,2))
-        normalizer = 0.5 * y_pred._shape._dims[1]._value
-        regression_loss=b/normalizer
-        return (regression_loss)
-    return _neural_decay
 
-def focal_gyf(alpha=0.1):
+def focal_DRN(alpha=0.1):
     def _focal_gyf(y_true, y_pred):
         labels         = y_true
         classification = y_pred
-        '''
-        # filter out "ignore" anchors
-        anchor_state   = keras.retina_backend.max(labels, axis=2)  # -1 for ignore, 0 for background, 1 for object
-        indices        = retina_backend.where(keras.retina_backend.greater(labels, 0))
-        labels         = retina_backend.gather_nd(labels, indices)
-        classification = retina_backend.gather_nd(classification, indices)
-        '''
+
         # compute the focal loss
         alpha_factor = keras.backend.ones_like(labels) * alpha
         alpha_factor = backend.where(keras.backend.equal(labels, 0), alpha_factor, 1 - alpha_factor)
-        #focal_weight = retina_backend.where(keras.retina_backend.equal(labels, 1), 1 - classification, classification)
-        focal_weight = alpha_factor #* focal_weight ** gamma
+
+        focal_weight = alpha_factor
 
         # compute smooth L1 loss
         # f(x) = 0.5 * (x)^2            if |x| < 1
@@ -117,13 +102,7 @@ def focal_gyf(alpha=0.1):
 
         cls_loss = focal_weight * regression_loss
 
-        '''
-        # compute the normalizer: the number of positive anchors
-        normalizer = retina_backend.where(keras.retina_backend.greater(labels, 0))
-        normalizer = keras.retina_backend.cast(keras.retina_backend.shape(normalizer)[0], keras.retina_backend.floatx())
-        normalizer = keras.retina_backend.maximum(1.0, normalizer)
-        '''
-        return keras.backend.sum(cls_loss) #/ normalizer
+        return keras.backend.sum(cls_loss)
 
     return _focal_gyf
 
@@ -144,7 +123,6 @@ def mu_sig_gyf():
         return output
 
     return _mu_sig_gyf
-
 
 
 def mu_sig_gyf_L1():
@@ -173,31 +151,3 @@ def mu_sig_gyf_L1():
         return output
 
     return _mu_sig_gyf_L1
-
-
-# def focal_gyf(alpha=0.999, gamma=2.0):
-#     def _focal_gyf(y_true, y_pred):
-#         labels         = y_true
-#         classification = y_pred
-#         '''
-#         # filter out "ignore" anchors
-#         anchor_state   = keras.retina_backend.max(labels, axis=2)  # -1 for ignore, 0 for background, 1 for object
-#         indices        = retina_backend.where(keras.retina_backend.greater(labels, 0))
-#         labels         = retina_backend.gather_nd(labels, indices)
-#         classification = retina_backend.gather_nd(classification, indices)
-#         '''
-#
-#         regression_diff = labels - classification
-#         regression_diff = keras.retina_backend.abs(regression_diff)
-#
-#         cls_loss = alpha * regression_diff
-#         '''
-#         # compute the normalizer: the number of positive anchors
-#         normalizer = retina_backend.where(keras.retina_backend.greater(labels, 0))
-#         normalizer = keras.retina_backend.cast(keras.retina_backend.shape(normalizer)[0], keras.retina_backend.floatx())
-#         normalizer = keras.retina_backend.maximum(1.0, normalizer)
-#         '''
-#
-#         return keras.retina_backend.sum(cls_loss)
-#
-#     return _focal_gyf

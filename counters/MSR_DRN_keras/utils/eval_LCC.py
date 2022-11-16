@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 # from sklearn.metrics import r2_score
 import cv2
 from PIL import Image
-from GetEnvVar import GetEnvVar
 import sys
 import argparse
 

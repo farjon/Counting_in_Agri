@@ -20,36 +20,25 @@ import keras
 import keras_resnet
 import keras_resnet.models
 import keras.applications.imagenet_utils
-from . import gyf_net_reg, gyf_net_keyPfinder #retinanet, gyf_net,
+from . import DRN, MSR
 from . import Backbone
 
 
 class ResNetBackbone(Backbone):
-    def __init__(self, backbone):
+    def __init__(self, backbone, model_type):
         super(ResNetBackbone, self).__init__(backbone)
         self.custom_objects.update(keras_resnet.custom_objects)
+        self.model_type = model_type
 
     def retinanet(self, *args, **kwargs):
         """ Returns a retinanet model using the correct backbone.
         """
         return resnet_retinanet(*args, backbone=self.backbone, **kwargs)
 
-    def gyf_net(self, *args, **kwargs):
-        """ Returns a retinanet model using the correct backbone.
-        """
-        return resnet_gyf_net(*args, backbone=self.backbone, **kwargs)
+    def create_net(self, *args, **kwargs):
+        return resnet_counting_net(self.model_type, *args, backbone=self.backbone, **kwargs)
 
-    def gyf_net_reg(self, *args, **kwargs):
-        """ Returns a retinanet model using the correct backbone.
-        """
-        return resnet_gyf_net('reg', *args, backbone=self.backbone, **kwargs)
-
-    def gyf_net_keyPfinder(self, *args, **kwargs):
-        """ Returns a retinanet model using the correct backbone.
-        """
-        return resnet_gyf_net('keyPfinder', *args, backbone=self.backbone, **kwargs)
-
-    def download_imagenet(self):
+    def download_imagenet(self, path_to_save_weights):
         """ Downloads ImageNet weights and returns path to weights file.
         """
         resnet_filename = 'ResNet-{}-model.keras.h5'
@@ -68,14 +57,14 @@ class ResNetBackbone(Backbone):
         return keras.applications.imagenet_utils.get_file(
             filename,
             resource,
-            cache_subdir='models',
+            cache_subdir=path_to_save_weights,
             md5_hash=checksum
         )
 
     def validate(self):
         """ Checks whether the backbone string is correct.
         """
-        allowed_backbones = ['resnet50', 'resnet101', 'resnet152']
+        allowed_backbones = ['resnet50']
         backbone = self.backbone.split('_')[0]
 
         if backbone not in allowed_backbones:
@@ -90,10 +79,6 @@ def resnet_retinanet(num_classes, backbone='resnet50', inputs=None, modifier=Non
     # create the resnet backbone
     if backbone == 'resnet50':
         resnet = keras_resnet.models.ResNet50(inputs, include_top=False, freeze_bn=True)
-    elif backbone == 'resnet101':
-        resnet = keras_resnet.models.ResNet101(inputs, include_top=False, freeze_bn=True)
-    elif backbone == 'resnet152':
-        resnet = keras_resnet.models.ResNet152(inputs, include_top=False, freeze_bn=True)
     else:
         raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
 
@@ -105,7 +90,7 @@ def resnet_retinanet(num_classes, backbone='resnet50', inputs=None, modifier=Non
     return #retinanet.retinanet(inputs=inputs, num_classes=num_classes, backbone_layers=resnet.outputs[1:], **kwargs)
 
 
-def resnet_gyf_net(type, num_classes, option, backbone='resnet50', inputs=None, modifier=None, do_dropout = None, **kwargs):
+def resnet_counting_net(model_type, backbone='resnet50', inputs=None, modifier=None, **kwargs):
     # choose default input
     if inputs is None:
         inputs = keras.layers.Input(shape=(None, None, 3))
@@ -113,18 +98,6 @@ def resnet_gyf_net(type, num_classes, option, backbone='resnet50', inputs=None, 
     # create the resnet backbone
     if backbone == 'resnet50':
         resnet = keras_resnet.models.ResNet50(inputs, include_top=False, freeze_bn=True)
-
-        # # adding activity regularizer of 2 last conv layer
-        # resnet.get_layer('res5c_branch2b').activity_regularizer = keras.regularizers.l2(nd_weights[0])
-        # resnet.get_layer('res5c_branch2b').kernel_regularizer = keras.regularizers.l2(wd_weights[0])
-        # # adding weight regularizer of 2 last conv layer
-        # resnet.get_layer('res5c_branch2c').activity_regularizer = keras.regularizers.l2(nd_weights[1])
-        # resnet.get_layer('res5c_branch2c').kernel_regularizer = keras.regularizers.l2(wd_weights[1])
-
-    elif backbone == 'resnet101':
-        resnet = keras_resnet.models.ResNet101(inputs, include_top=False, freeze_bn=True)
-    elif backbone == 'resnet152':
-        resnet = keras_resnet.models.ResNet152(inputs, include_top=False, freeze_bn=True)
     else:
         raise ValueError('Backbone (\'{}\') is invalid.'.format(backbone))
 
@@ -132,23 +105,11 @@ def resnet_gyf_net(type, num_classes, option, backbone='resnet50', inputs=None, 
     if modifier:
         resnet = modifier(resnet)
 
-    if type == 'reg':
-        gyf_net = gyf_net_reg
-    elif type == 'keyPfinder':
-        gyf_net = gyf_net_keyPfinder
+    if model_type == 'MSR':
+        net = MSR
+    elif model_type == 'DRN':
+        return DRN.DRN_net(inputs=inputs, backbone_layers=resnet.outputs[1:], **kwargs)
 
-
-    # create the full model
-    if not (do_dropout is None):
-        return gyf_net.gyf_net(inputs=inputs, backbone_layers=resnet.outputs[1:], num_classes=num_classes, option=option, do_dropout=do_dropout, **kwargs)
-    else:
-        return gyf_net.gyf_net(inputs=inputs, backbone_layers=resnet.outputs[1:], num_classes=num_classes, option=option, **kwargs)
 
 def resnet50_retinanet(num_classes, inputs=None, **kwargs):
     return resnet_retinanet(num_classes=num_classes, backbone='resnet50', inputs=inputs, **kwargs)
-
-def resnet101_retinanet(num_classes, inputs=None, **kwargs):
-    return resnet_retinanet(num_classes=num_classes, backbone='resnet101', inputs=inputs, **kwargs)
-
-def resnet152_retinanet(num_classes, inputs=None, **kwargs):
-    return resnet_retinanet(num_classes=num_classes, backbone='resnet152', inputs=inputs, **kwargs)
