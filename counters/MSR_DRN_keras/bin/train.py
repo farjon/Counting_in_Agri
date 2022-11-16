@@ -13,11 +13,11 @@ from counters.MSR_DRN_keras import losses
 from counters.MSR_DRN_keras import models
 from counters.MSR_DRN_keras.callbacks import RedirectModel
 from counters.MSR_DRN_keras.models.DRN import DRN_net_inference
+from counters.MSR_DRN_keras.utils.keras_utils import check_keras_version, get_session
 
 from counters.MSR_DRN_keras.callbacks.LLC_eval import Evaluate_LLCtype
 from counters.MSR_DRN_keras.preprocessing.csv_LCC_generator import CSVLCCGenerator
 from counters.MSR_DRN_keras.utils.anchors import make_shapes_callback, anchor_targets_bbox
-from counters.MSR_DRN_keras.utils.keras_version import check_keras_version
 from counters.MSR_DRN_keras.utils.general_utils import freeze as freeze_model
 from counters.MSR_DRN_keras.utils.transform import random_transform_generator
 
@@ -27,17 +27,23 @@ random.seed(12345)
 tf.set_random_seed(1234)
 
 
-def get_session():
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    return tf.Session(config=config)
-
-
 def model_with_weights(model, weights, skip_mismatch):
     if weights is not None:
         model.load_weights(weights, by_name=True, skip_mismatch=skip_mismatch)
     return model
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
+    parser.add_argument('--model_type', type=str, default='DRN', help = 'can be either MSR of DRN')
+    parser.add_argument('--dataset_type', type=str, default='csv')
+    parser.add_argument('--dataset_name', type=str, default='A1')
+
+    parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--exp_num', type=int, default=0, help = 'if exp_num already exists, num will be increased automaically')
+    parser.add_argument('--early_stopping_indicator', type=str, default='AbsCountDiff', help = 'if using an early stopping, what should we monitor (AbsCountDiff, MSE)')
+    parser.add_argument('--snapshot_index', type=str, default='AbsCountDiff', help = 'save a snapshot if this index is improved (AbsCountDiff, MSE)')
+    return parser.parse_args()
 
 def create_models(backbone_counting_net, weights, freeze_backbone=False):
     modifier = freeze_model if freeze_backbone else None
@@ -209,12 +215,7 @@ def main(args=None):
     print(model.summary())
 
     # create the callbacks
-    callbacks = create_callbacks(
-        model,
-        prediction_model,
-        validation_generator,
-        args
-    )
+    callbacks = create_callbacks(model, prediction_model, validation_generator, args)
 
     # start training
     history = training_model.fit_generator(
@@ -229,19 +230,6 @@ def main(args=None):
     model.save(os.path.join(args.snapshot_path, 'resnet50_final.h5'))
 
     return history
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='DRN', help = 'can be either MSR of DRN')
-    parser.add_argument('--dataset_type', type=str, default='csv')
-    parser.add_argument('--dataset_name', type=str, default='A1')
-
-    parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--exp_num', type=int, default=0, help = 'if exp_num already exists, num will be increased automaically')
-    parser.add_argument('--early_stopping_indicator', type=str, default='AbsCountDiff', help = 'if using an early stopping, what should we monitor (AbsCountDiff, MSE)')
-    parser.add_argument('--snapshot_index', type=str, default='AbsCountDiff', help = 'save a snapshot if this index is improved (AbsCountDiff, MSE)')
-    return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
