@@ -3,10 +3,10 @@ import numpy as np
 import torch
 import argparse
 
-from counters.MSR_DRN.models import DRN
+from counters.MSR_DRN_pytorch.models import DRN
 from torch.utils.data import DataLoader
-from counters.MSR_DRN.utils.dataloader import CSV_OC
-from counters.MSR_DRN.bin.train_loop import train_MSR_DRN
+from counters.MSR_DRN_pytorch.utils.dataloader import CSV_OC
+from counters.MSR_DRN_pytorch.bin.train_loop import train_MSR_DRN
 
 
 def parse_args():

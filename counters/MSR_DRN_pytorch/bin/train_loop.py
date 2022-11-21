@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import wandb
 from tqdm import tqdm
-from counters.MSR_DRN.utils.losses import focal_DRN, calc_metrices
+from counters.MSR_DRN_pytorch.utils.losses import focal_DRN, calc_metrices
 
 def train_MSR_DRN(args, train_dataset, val_dataset, model, count_loss_func, optimizer, scheduler):
     # wandb.init('DRN - counting')

@@ -110,8 +110,6 @@ if __name__ == '__main__':
     args.imagenet_weights = True
     args.weights = None
 
-
-
     # for cpu - comment args.gpu
     args.gpu = '0'
     main(args)
