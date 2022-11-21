@@ -7,8 +7,8 @@ from torchvision.ops import nms
 from pytorch_retinanet.retinanet.utils import BasicBlock, Bottleneck, BBoxTransform, ClipBoxes
 from pytorch_retinanet.retinanet.anchors import Anchors
 # from pytorch_retinanet.retinanet import losses
-from counters.MSR_DRN.utils import losses
-from counters.MSR_DRN.layers._misc import SmoothStepFunction, SpatialNMS, GlobalSumPooling2D
+from counters.MSR_DRN_pytorch.utils import losses
+from counters.MSR_DRN_pytorch.layers._misc import SmoothStepFunction, SpatialNMS, GlobalSumPooling2D
 model_urls = {
     'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth'
 }

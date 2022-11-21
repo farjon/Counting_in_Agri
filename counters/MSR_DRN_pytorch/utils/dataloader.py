@@ -10,7 +10,7 @@ import cv2
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from torch.utils.data.sampler import Sampler
-from counters.MSR_DRN.utils.data_funcitons import read_annotations_OC, read_annotations_ON, create_gausian_mask
+from counters.MSR_DRN_pytorch.utils.data_funcitons import read_annotations_OC, read_annotations_ON, create_gausian_mask
 from pycocotools.coco import COCO
 
 import skimage.io

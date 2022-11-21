@@ -14,6 +14,8 @@
 **__pycache__/
 **/wandb/
 **/coco_eval/
+**/MSR_DRN_keras/for_submission/*
+**/MSR_DRN_keras/experimentations/*
 0.8.1'
 1.7.0'
 **/wandb/
