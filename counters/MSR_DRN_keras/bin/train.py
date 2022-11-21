@@ -13,13 +13,13 @@ from counters.MSR_DRN_keras import losses
 from counters.MSR_DRN_keras import models
 from counters.MSR_DRN_keras.callbacks import RedirectModel
 from counters.MSR_DRN_keras.models.DRN import DRN_net_inference
+from counters.MSR_DRN_keras.models.MSR import MSR_net_inference
 from counters.MSR_DRN_keras.utils.keras_utils import check_keras_version, get_session
-
-from counters.MSR_DRN_keras.callbacks.LLC_eval import Evaluate_LLCtype
-from counters.MSR_DRN_keras.preprocessing.csv_LCC_generator import CSVLCCGenerator
-from counters.MSR_DRN_keras.utils.anchors import make_shapes_callback, anchor_targets_bbox
-from counters.MSR_DRN_keras.utils.general_utils import freeze as freeze_model
+from counters.MSR_DRN_keras.preprocessing.csv_DRN_MSR_generator import CSVGenerator_MSR_DRN
+from counters.MSR_DRN_keras.utils.keras_utils import freeze as freeze_model
 from counters.MSR_DRN_keras.utils.transform import random_transform_generator
+
+from counters.MSR_DRN_keras.callbacks.evaluate_counting_callback import Evaluate_Counting_Callback
 
 os.environ['PYTHONHASHSEED'] = '0'
 np.random.seed(42)
@@ -34,38 +34,46 @@ def model_with_weights(model, weights, skip_mismatch):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='DRN', help = 'can be either MSR of DRN')
+    parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
     parser.add_argument('--dataset_type', type=str, default='csv')
     parser.add_argument('--dataset_name', type=str, default='A1')
 
     parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--lr', type=float, default=1e-5)
     parser.add_argument('--exp_num', type=int, default=0, help = 'if exp_num already exists, num will be increased automaically')
-    parser.add_argument('--early_stopping_indicator', type=str, default='AbsCountDiff', help = 'if using an early stopping, what should we monitor (AbsCountDiff, MSE)')
-    parser.add_argument('--snapshot_index', type=str, default='AbsCountDiff', help = 'save a snapshot if this index is improved (AbsCountDiff, MSE)')
+    parser.add_argument('--early_stopping_indicator', type=str, default='abs_DiC', help = 'if using an early stopping, what should we monitor (abs_DiC, MSE)')
+    parser.add_argument('--snapshot_index', type=str, default='abs_DiC', help = 'save a snapshot if this index is improved (abs_DiC, MSE)')
     return parser.parse_args()
 
-def create_models(backbone_counting_net, weights, freeze_backbone=False):
+def create_models(model_type, backbone_counting_net, weights, freeze_backbone=False):
     modifier = freeze_model if freeze_backbone else None
 
     model = model_with_weights(backbone_counting_net(modifier=modifier), weights=weights, skip_mismatch=True)
     training_model = model
 
     # make prediction model
-    prediction_model = DRN_net_inference(model=model)
-
-    variable_losses = {'detection_subnetwork_final_relu': losses.focal_DRN(),
-                      'detection_subnetwork_mid_output_0': losses.focal_DRN(),
-                      'detection_subnetwork_mid_output_1': losses.focal_DRN(),
-                      'detection_subnetwork_mid_output_2': losses.focal_DRN(),
-                      'detection_subnetwork_mid_output_3': losses.focal_DRN(),
-                      'counting_reg_output': keras.losses.mae
-                       }
+    if model_type == 'DRN':
+        prediction_model = DRN_net_inference(model=model)
+        variable_losses = {
+            'detection_subnetwork_mid_output_0': losses.focal_DRN(),
+            'detection_subnetwork_mid_output_1': losses.focal_DRN(),
+            'detection_subnetwork_mid_output_2': losses.focal_DRN(),
+            'detection_subnetwork_mid_output_3': losses.focal_DRN(),
+            'detection_subnetwork_final_relu': losses.focal_DRN(),
+            'counting_reg_output': keras.losses.mae
+        }
+    elif model_type == 'MSR_P3_L2':
+        prediction_model = MSR_net_inference(model_type=args.model_type, model=model)
+        variable_losses = {'regression': keras.losses.mse}
+    elif model_type == 'MSR_P3_P7_Gauss_MLE':
+        prediction_model = MSR_net_inference(model_type=args.model_type, model=model)
+        variable_losses = {'FC_submodel': losses.mu_sigma_MSR()}
 
     # compile model
     training_model.compile(
         loss=variable_losses,
-        optimizer = keras.optimizers.adam(lr=1e-5, clipnorm=0.001)
+        optimizer = keras.optimizers.adam(lr=args.lr, clipnorm=0.001)
     )
     return model, training_model, prediction_model
 
@@ -90,13 +98,13 @@ def create_callbacks(model, prediction_model, validation_generator, args):
         callbacks.append(tensorboard_callback)
 
     if args.evaluation and validation_generator:
-        evaluation = Evaluate_LLCtype(validation_generator, tensorboard=tensorboard_callback, save_path = args.save_path)
+        evaluation = Evaluate_Counting_Callback(args.model_type, validation_generator, tensorboard=tensorboard_callback, save_path = args.save_path)
         evaluation = RedirectModel(evaluation, prediction_model)
         callbacks.append(evaluation)
 
     # save the model
     if args.snapshot_path:
-        if args.snapshot_index in ['AbsCountDiff', 'MSE']:
+        if args.snapshot_index in ['abs_DiC', 'MSE']:
             mode = 'min'
         # ensure directory created first; otherwise h5py will error after epoch.
         os.makedirs(args.snapshot_path, exist_ok=True)
@@ -122,11 +130,10 @@ def create_callbacks(model, prediction_model, validation_generator, args):
         early_stopping = RedirectModel(early_stopping, model)
         callbacks.append(early_stopping)
 
-    #TODO - add these parameters to args
     callbacks.append(keras.callbacks.ReduceLROnPlateau(
         monitor  = 'loss',
-        factor   = 0.1,
-        patience = 3,
+        factor   = args.reduceLR_factor,
+        patience = args.reduceLR_patience,
         verbose  = 1,
         mode     = 'auto',
         epsilon  = 0.0001,
@@ -152,9 +159,12 @@ def create_generators(args):
     else:
         transform_generator = None
 
-    train_generator = CSVLCCGenerator(
-        args.train_csv_leaf_number_file,
-        args.train_csv_leaf_location_file,
+    train_generator = CSVGenerator_MSR_DRN(
+        mode='training',
+        model_type=args.model_type,
+        class_name='leafs',
+        csv_object_number_file=args.train_csv_leaf_number_file,
+        csv_object_location_file=args.train_csv_leaf_location_file,
         transform_generator=transform_generator,
         batch_size=args.batch_size,
         image_min_side=args.image_min_side,
@@ -162,9 +172,12 @@ def create_generators(args):
     )
 
     if args.val_csv_leaf_number_file:
-        validation_generator = CSVLCCGenerator(
-            args.val_csv_leaf_number_file,
-            args.val_csv_leaf_location_file,
+        validation_generator = CSVGenerator_MSR_DRN(
+            mode='training',
+            model_type=args.model_type,
+            classes={'leafs' : 0},
+            csv_object_number_file=args.val_csv_leaf_number_file,
+            csv_object_location_file=args.val_csv_leaf_location_file,
             batch_size=args.batch_size,
             image_min_side=args.image_min_side,
             image_max_side=args.image_max_side
@@ -201,12 +214,16 @@ def main(args=None):
         print(f'Loading model from checkpoint {args.snapshot_path}, this may take a second...')
         model = models.load_model(os.path.join(args.snapshot_path, 'resnet50_csv_snapshot.h5'), backbone_name=args.backbone)
         training_model = model
-        prediction_model = DRN_net_inference(model=model)
+        if args.model_type == 'DRN':
+            prediction_model = DRN_net_inference(model=model)
+        elif args.model_type == 'MSR_P3_L2':
+            prediction_model = MSR_net_inference(model_type=args.model_type, model=model)
         print('loaded model from checkpoint - model will be trained from given checkpoint')
     else:
         weights = backbone.download_imagenet(args.save_pre_trained_weights_path)
         print('Creating model, this may take a second...')
         model, training_model, prediction_model = create_models(
+            args.model_type,
             backbone_counting_net=backbone.create_net,
             weights=weights,
             freeze_backbone=args.freeze_backbone)
@@ -253,18 +270,27 @@ if __name__ == '__main__':
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'training', args.dataset_name)
 
     # model variant
-    if args.model_type == 'DRN':
-        args.option = 20
-    elif args.model_type == 'MSR':
-        args.option = ''
-    else:
+    if not args.model_type in ['DRN', 'MSR_P3_P7_Gauss_MLE', 'MSR_P3_L2']:
         raise('model type unknown, should be either MSR or DRN')
-
+    if args.model_type == 'DRN':
+        args.reduce_lr = True
+        args.reduceLR_patience = 3
+        args.reduceLR_factor = 0.1
+        # adding object locations maps
+        args.train_csv_leaf_location_file = os.path.join(args.data_path, 'train',
+                                                         args.dataset_name + '_Train_leaf_location.csv')
+        args.val_csv_leaf_location_file = os.path.join(args.data_path, 'val',
+                                                       args.dataset_name + '_Val_leaf_location.csv')
+    else:
+        args.reduce_lr = True
+        args.reduceLR_patience = 8
+        args.reduceLR_factor = 0.05
+        args.train_csv_leaf_location_file = ''
+        args.val_csv_leaf_location_file = ''
+    # the number of object is obligatory for all model variants
     args.train_csv_leaf_number_file = os.path.join(args.data_path, 'train', args.dataset_name+'_Train.csv')
-    args.train_csv_leaf_location_file = os.path.join(args.data_path, 'train', args.dataset_name+'_Train_leaf_location.csv')
-
     args.val_csv_leaf_number_file = os.path.join(args.data_path, 'val', args.dataset_name+'_Val.csv')
-    args.val_csv_leaf_location_file = os.path.join(args.data_path, 'val', args.dataset_name+'_Val_leaf_location.csv')
+
 
     args.imagenet_weights = True
     args.save_pre_trained_weights_path = os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained')

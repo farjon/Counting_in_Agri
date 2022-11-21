@@ -2,7 +2,6 @@ import keras
 from counters.MSR_DRN_keras import layers
 
 def create_detection_subnetwork_graph(inputs, classification_feature_size=256):
-
     options = {
         'kernel_size': 3,
         'strides': 1,
@@ -46,7 +45,6 @@ def create_detection_subnetwork_graph(inputs, classification_feature_size=256):
     final_relu = keras.layers.Activation('relu', name='detection_subnetwork_final_relu')(final_conv)
 
     return mid_outputs + [outputs] + [final_relu]
-
 
 def create_p3_feature(C3, C4, C5, feature_size=256):
     """ Creates the FPN layers on top of the backbone features.
@@ -109,8 +107,6 @@ def DRN_net(inputs, backbone_layers, name='DRN_net'):
     outputs = [reg_output_downsampled] + subnetwork_outputs
 
     return keras.models.Model(inputs=inputs, outputs=outputs, name=name)
-
-
 
 def DRN_net_inference(model=None, name='DRN_counting_net', **kwargs):
 

@@ -105,8 +105,9 @@ def resnet_counting_net(model_type, backbone='resnet50', inputs=None, modifier=N
     if modifier:
         resnet = modifier(resnet)
 
-    if model_type == 'MSR':
-        net = MSR
+    if model_type in ['MSR_P3_P7_Gauss_MLE', 'MSR_P3_L2']:
+        return MSR.MSR_net(inputs=inputs, backbone_layers=resnet.output[1:], model_variant=model_type)
+
     elif model_type == 'DRN':
         return DRN.DRN_net(inputs=inputs, backbone_layers=resnet.outputs[1:], **kwargs)
 

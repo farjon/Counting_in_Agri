@@ -107,22 +107,19 @@ def focal_DRN(alpha=0.1):
     return _focal_gyf
 
 
-def mu_sig_gyf():
-    def _mu_sig_gyf(y_true, pred):
-        labels         = y_true
+def mu_sigma_MSR():
+    def _mu_sigma_MSR(y_true, pred):
+
         y_pred_log_var = keras.backend.map_fn(lambda x: x , pred[0])
 
         y_pred = y_pred_log_var[0]
-        log_var = y_pred_log_var[1] #keras.retina_backend.maximum(y_pred_log_var[1],0)
+        log_var = y_pred_log_var[1]
 
-        # Si = log(var(y_pred_i))
-        # loss = 0.5*exp(-Si)*(y_pred_i - y_true_i)^2 + 0.5*Si
-        #output = keras.retina_backend.exp(-log_var)*keras.retina_backend.pow(y_true - y_pred,2) + log_var
         output = keras.backend.exp(-log_var) * keras.backend.pow(y_true - y_pred,2) + log_var
 
         return output
 
-    return _mu_sig_gyf
+    return _mu_sigma_MSR
 
 
 def mu_sig_gyf_L1():
