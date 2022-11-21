@@ -13,7 +13,7 @@ if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
     __package__ = "keras_retinanet.preprocessing"
 
-from ..preprocessing.csv_LCC_generator import CSVLCCGenerator
+from ..preprocessing.csv_DRN_MSR_generator import CSVLCCGenerator
 
 from transform import random_transform_generator
 from .cropping_transform import random_crop

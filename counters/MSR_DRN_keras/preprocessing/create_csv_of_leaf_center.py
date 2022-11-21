@@ -2,7 +2,6 @@ import csv
 import cv2
 import os
 import numpy as np
-from GetEnvVar import GetEnvVar
 
 '''
 This script generates a csv file that contains the coordinates of the leaves center points, as provided by 

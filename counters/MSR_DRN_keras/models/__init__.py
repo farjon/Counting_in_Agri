@@ -4,13 +4,12 @@ class Backbone(object):
     def __init__(self, backbone):
         # a dictionary mapping custom layer names to the correct classes
         from .. import layers
-        from .. import losses
-        from .. import initializers
+        from counters.MSR_DRN_keras.layers import losses
+        from counters.MSR_DRN_keras.utils import initializers
         self.custom_objects = {
             'UpsampleLike'      : layers.UpsampleLike,
             'PriorProbability'  : initializers.PriorProbability,
             'RegressBoxes'      : layers.RegressBoxes,
-            'FilterDetections'  : layers.FilterDetections,
             'Anchors'           : layers.Anchors,
             'ClipBoxes'         : layers.ClipBoxes,
             'GlobalSumPooling2D': layers.GlobalSumPooling2D,
@@ -56,7 +55,7 @@ def backbone(backbone_name, model_type):
     return b(backbone_name, model_type)
 
 
-def load_model(filepath, backbone_name='resnet50', convert=False, nms=True):
+def load_model(filepath, model_type, backbone_name='resnet50', convert=False, nms=True):
     """ Loads a retinanet model using the correct custom objects.
 
     # Arguments
@@ -76,10 +75,6 @@ def load_model(filepath, backbone_name='resnet50', convert=False, nms=True):
     """
     import keras.models
 
-    model = keras.models.load_model(filepath, custom_objects=backbone(backbone_name).custom_objects)
-    '''
-    if convert:
-        from .retinanet import retinanet_bbox
-        model = retinanet_bbox(model=model, nms=nms)
-    '''
+    model = keras.models.load_model(filepath, custom_objects=backbone(backbone_name, model_type=model_type).custom_objects)
+
     return model

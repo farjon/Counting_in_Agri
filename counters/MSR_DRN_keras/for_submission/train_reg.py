@@ -27,30 +27,17 @@ import keras.preprocessing.image
 from keras.utils import multi_gpu_model
 import tensorflow as tf
 
-from GetEnvVar import GetEnvVar
-
-# # Allow relative imports when being executed as script.
-# if __name__ == "__main__" and __package__ is None:
-#     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-#     import keras_retinanet.bin
-#     __package__ = "keras_retinanet.bin"
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-#import keras_retinanet.bin
-__package__ = "keras_retinanet.bin"
-
 # Change these to absolute imports if you copy this script outside the keras_retinanet package.
-from .. import layers
-from .. import losses
-from .. import models
-from ..callbacks import RedirectModel
-from ..callbacks.LLC_eval import Evaluate_LLCtype
-from ..models.gyf_net_reg import gyf_net_LCC
-from ..preprocessing.csv_LCC_generator import CSVLCCGenerator
-from ..utils.anchors import make_shapes_callback, anchor_targets_bbox
+from counters.MSR_DRN_keras.layers import losses
+from counters.MSR_DRN_keras import models
+from counters.MSR_DRN_keras.callbacks import RedirectModel
+from counters.MSR_DRN_keras.callbacks.evaluate_counting_callback import Evaluate_LLCtype
+from counters.MSR_DRN_keras.models.gyf_net_reg import gyf_net_LCC
+from counters.MSR_DRN_keras.preprocessing.csv_DRN_MSR_generator import CSVLCCGenerator
+from counters.MSR_DRN_keras.utils.anchors import make_shapes_callback, anchor_targets_bbox
 from ..utils.keras_version import check_keras_version
-from ..utils.general_utils import freeze as freeze_model
-from ..utils.transform import random_transform_generator
+from counters.MSR_DRN_keras.utils.keras_utils import freeze as freeze_model
+from counters.MSR_DRN_keras.utils.transform import random_transform_generator
 
 
 def makedirs(path):
@@ -478,17 +465,7 @@ if __name__ == '__main__':
 
     args.exp_num = 525
     # the model options are:
-    '''
-    reg options:
-    'reg_baseline_c5_dubreshko'
-    'reg_baseline_c5'
-    'reg_fpn_p3'
-    'reg_fpn_p3_p7_avg'
-    'reg_fpn_p3_p7_mle'
-    'reg_fpn_p3_p7_min_sig'
-    'reg_fpn_p3_p7_mle_L1'
-    'reg_fpn_p3_p7_min_sig_L1'
-    '''
+
     args.option = 'reg_fpn_p3_p7_mle'
     # Backbone options are resnet50 / resnet101 / resnet152 (checked - resnet50)
     args.backbone = 'resnet50'

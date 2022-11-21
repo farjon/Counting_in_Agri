@@ -1,8 +1,4 @@
-import os
-import sys
-
 import keras
-from counters.MSR_DRN_keras import initializers
 from counters.MSR_DRN_keras import layers
 
 

@@ -12,13 +12,6 @@ import create_csv_of_leaf_center
 import pandas as pd
 
 
-#Allow relative imports when being executed as script.
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-import keras_retinanet.bin
-__package__ = "keras_retinanet.bin"
-
-
-
 def parse_args(args):
     parser     = argparse.ArgumentParser(description='Simple training script for training a RetinaNet network.')
 

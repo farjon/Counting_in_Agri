@@ -9,7 +9,7 @@ import numpy as np
 import keras.preprocessing.image
 import tensorflow as tf
 
-from counters.MSR_DRN_keras import losses
+from counters.MSR_DRN_keras.layers import losses
 from counters.MSR_DRN_keras import models
 from counters.MSR_DRN_keras.callbacks import RedirectModel
 from counters.MSR_DRN_keras.models.DRN import DRN_net_inference
@@ -34,10 +34,8 @@ def model_with_weights(model, weights, skip_mismatch):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_type', type=str, default='csv')
+    parser.add_argument('--model_type', type=str, default='DRN', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
     parser.add_argument('--dataset_name', type=str, default='A1')
-
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--lr', type=float, default=1e-5)
@@ -109,7 +107,7 @@ def create_callbacks(model, prediction_model, validation_generator, args):
         # ensure directory created first; otherwise h5py will error after epoch.
         os.makedirs(args.snapshot_path, exist_ok=True)
         checkpoint = keras.callbacks.ModelCheckpoint(
-            os.path.join(args.snapshot_path, f'{args.backbone}_{args.dataset_type}.h5'),
+            os.path.join(args.snapshot_path, f'{args.backbone}_{args.model_type}_best.h5'),
             verbose=1,
             period= 1,
             save_best_only=True,
@@ -212,11 +210,11 @@ def main(args=None):
     # create the model
     if args.snapshot is not None:
         print(f'Loading model from checkpoint {args.snapshot_path}, this may take a second...')
-        model = models.load_model(os.path.join(args.snapshot_path, 'resnet50_csv_snapshot.h5'), backbone_name=args.backbone)
+        model = models.load_model(os.path.join(args.snapshot_path, 'resnet50_csv_snapshot.h5'), backbone_name=args.backbone, model_type=args.model_type)
         training_model = model
         if args.model_type == 'DRN':
             prediction_model = DRN_net_inference(model=model)
-        elif args.model_type == 'MSR_P3_L2':
+        elif args.model_type in ['MSR_P3_P7_Gauss_MLE', 'MSR_P3_L2']:
             prediction_model = MSR_net_inference(model_type=args.model_type, model=model)
         print('loaded model from checkpoint - model will be trained from given checkpoint')
     else:
@@ -259,7 +257,7 @@ if __name__ == '__main__':
     args.random_transform = True
     args.evaluation = True
     args.backbone = 'resnet50'
-    args.snapshot_path = os.path.join(args.ROOT_DIR, 'Trained_Models', f'{args.model_type}_Models_snapshots', args.model_type, f'exp_{str(args.exp_num)}')
+    args.snapshot_path = os.path.join(args.ROOT_DIR, 'Trained_Models', f'{args.model_type}_Models_snapshots', args.model_type, args.dataset_name, f'exp_{str(args.exp_num)}')
     args.tensorboard_dir = os.path.join(args.ROOT_DIR, 'Results', args.model_type, args.dataset_name, f'exp_{str(args.exp_num)}', 'log_dir')
     args.save_path = os.path.join(args.ROOT_DIR, 'Results', args.model_type, args.dataset_name, f'exp_{str(args.exp_num)}', 'main_results')
     # ---------------- END ----------------

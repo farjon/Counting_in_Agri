@@ -4,15 +4,9 @@ import sys
 import os
 import argparse
 import numpy as np
-from GetEnvVar import GetEnvVar
 import pandas as pd
 
-
-#Allow relative imports when being executed as script.
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-__package__ = "keras_retinanet.bin"
-
-import train
+import counters.MSR_DRN_keras.bin.train
 import evaluate_LCC
 
 

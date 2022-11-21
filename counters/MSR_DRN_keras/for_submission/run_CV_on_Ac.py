@@ -5,8 +5,6 @@ import os
 import argparse
 import numpy as np
 from GetEnvVar import GetEnvVar
-import pandas as pd
-
 
 #Allow relative imports when being executed as script.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -15,10 +13,9 @@ __package__ = "keras_retinanet.bin"
 
 from run_CV import get_aggregated_results
 from run_CV import get_current_data
-from .import train
-from .import train_reg
-from . import evaluate_LCC
-from ..preprocessing import create_csv_of_leaf_center
+from counters.MSR_DRN_keras.bin import train
+from counters.MSR_DRN_keras.for_submission import train_reg, evaluate_LCC
+from counters.MSR_DRN_keras.preprocessing import create_csv_of_leaf_center
 
 
 def parse_args(args):

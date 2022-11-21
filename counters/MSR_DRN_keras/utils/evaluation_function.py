@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import os
 import numpy as np
-from counters.MSR_DRN_keras.bin.eval_detection import detection_evaluation, calc_recall_precision_ap
+from counters.MSR_DRN_keras.utils.eval_detection import detection_evaluation, calc_recall_precision_ap
 from counters.MSR_DRN_keras.utils.visualization import plot_RP_curve, visualize_images
 
 

@@ -19,13 +19,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-import keras_retinanet.bin
 __package__ = "keras_retinanet.bin"
 
 
 
 import keras
-from .. import initializers
 from .. import layers
 
 

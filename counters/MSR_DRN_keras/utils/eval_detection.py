@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-from ..utils.read_activations import get_activations
+from counters.MSR_DRN_keras.utils.read_activations import get_activations
 
 def detection_evaluation(image_name, model, image, GT_centers, alpha=0.1):
     local_soft_max_activations = get_activations(model, model_inputs=image[0], print_shape_only=False,

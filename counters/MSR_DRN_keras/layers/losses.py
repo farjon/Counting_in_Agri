@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 import keras
-from . import backend
+from counters.MSR_DRN_keras import backend
 
 
 def focal(alpha=0.25, gamma=2.0):
@@ -81,7 +81,7 @@ def smooth_l1(sigma=3.0):
 
 
 def focal_DRN(alpha=0.1):
-    def _focal_gyf(y_true, y_pred):
+    def _focal_DRN(y_true, y_pred):
         labels         = y_true
         classification = y_pred
 
@@ -104,7 +104,7 @@ def focal_DRN(alpha=0.1):
 
         return keras.backend.sum(cls_loss)
 
-    return _focal_gyf
+    return _focal_DRN
 
 
 def mu_sigma_MSR():

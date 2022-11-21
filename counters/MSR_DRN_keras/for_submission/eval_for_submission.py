@@ -25,7 +25,7 @@ from keras_retinanet import models
 from evaluate_LCC import get_session
 from evaluate_LCC import create_generator
 from torch_version import check_keras_version
-from ..preprocessing.csv_LCC_generator import CSVLCCGenerator
+from counters.MSR_DRN_keras.preprocessing.csv_DRN_MSR_generator import CSVLCCGenerator
 
 
 

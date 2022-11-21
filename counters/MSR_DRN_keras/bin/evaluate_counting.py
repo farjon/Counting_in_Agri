@@ -39,11 +39,9 @@ __package__ = "keras_retinanet.bin"
 # Change these to absolute imports if you copy this script outside the keras_retinanet package.
 from .. import models
 
-from ..preprocessing.csv_generator import CSVGenerator
-from ..preprocessing.pascal_voc import PascalVocGenerator
-from ..utils.eval_LCC import evaluate
+from ..utils.evaluation_function import evaluate
 from ..utils.keras_version import check_keras_version
-from ..preprocessing.csv_LCC_generator import CSVLCCGenerator
+from ..preprocessing.csv_DRN_MSR_generator import CSVLCCGenerator
 
 
 def get_session():
@@ -53,24 +51,7 @@ def get_session():
 
 
 def create_generator(args):
-    if args.dataset_type == 'coco':
-        # import here to prevent unnecessary dependency on cocoapi
-        from ..preprocessing.coco import CocoGenerator
-
-        validation_generator = CocoGenerator(
-            args.coco_path,
-            'val2017',
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side
-        )
-    elif args.dataset_type == 'pascal':
-        validation_generator = PascalVocGenerator(
-            args.pascal_path,
-            'test',
-            image_min_side=args.image_min_side,
-            image_max_side=args.image_max_side
-        )
-    elif args.dataset_type == 'csv':
+    if args.dataset_type == 'csv':
         validation_generator = CSVLCCGenerator(
             args.val_csv_leaf_number_file,
             args.val_csv_leaf_location_file,
@@ -143,13 +124,13 @@ def main(args=None):
     # make prediction model
     if args.pipe == 'reg':
         from ..models.gyf_net_reg import gyf_net_LCC
+        model = gyf_net_LCC(model=model, option=args.option)
     elif args.pipe == 'keyPfinder':
-        from ..models.gyf_net_keyPfinder import gyf_net_LCC
+        from ..models.DRN import DRN_net_inference
+        model = DRN_net_inference(model=model)
     else:
         print('Wrong pipe name - should be reg or keyPfinder')
         return
-
-    model = gyf_net_LCC(model=model, option=args.option)
 
     # start evaluation
 
