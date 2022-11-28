@@ -1,4 +1,5 @@
 import os
+import csv
 import shutil
 import argparse
 import numpy as np
@@ -14,51 +15,51 @@ def parse_args():
 def create_splited_dirs(data_dir, sub_datasets, sets_files, sets_names):
     new_data_folder = ''.join(sub_datasets)
     for current_set_files, current_set_name in zip(sets_files, sets_names):
-        current_set_data_path = os.path.join(new_data_folder, f'{new_data_folder}_{current_set_name}')
+        current_set_data_path = os.path.join(data_dir, new_data_folder, f'{new_data_folder}_{current_set_name}')
         os.makedirs(current_set_data_path, exist_ok=True)
-
+        set_output_count_csv = {}
+        set_output_location_csv = {}
         for i in range(len(current_set_files['rgb_images'])):
+            subset_origin = current_set_files['rgb_images'][i].split('\\')[-2]
             plant_name = os.path.basename(current_set_files['rgb_images'][i]).split('_')[0]
 
             # copy rgb images
             rgb_image_path = current_set_files['rgb_images'][i]
-            dst_file = os.path.join(current_set_data_path, plant_name + '_rgb.png')
+            dst_file = os.path.join(current_set_data_path, subset_origin + '_' + plant_name + '_rgb.png')
             shutil.copyfile(rgb_image_path, dst_file)
 
             # copy centers images
-            centers_image_path =  current_set_files['centers_images'][i]
-            dst_file = os.path.join(current_set_data_path, plant_name + '_centers.png')
+            centers_image_path = current_set_files['centers_images'][i]
+            dst_file = os.path.join(current_set_data_path, subset_origin + '_' + plant_name + '_centers.png')
             shutil.copyfile(centers_image_path, dst_file)
 
             # copy fg images
             mask_image_path = current_set_files['mask_images'][i]
-            dst_file = os.path.join(current_set_data_path, plant_name + '_fg.png')
+            dst_file = os.path.join(current_set_data_path, subset_origin + '_' + plant_name + '_fg.png')
             shutil.copyfile(mask_image_path, dst_file)
 
-        # # Create a csv file of leaf counts for the relevant set
-        # new_counts_file_path = os.path.join(current_set_data_path, current_dataset + "_" +dirType+".csv")
-        # with open(new_counts_file_path, 'w', newline='') as csvfile:
-        #     writer = csv.writer(csvfile)
-        #     for i in range(len(leaf_counts)):
-        #         line = leaf_counts[i][0]
-        #         keys = line.keys()
-        #         for key in keys:
-        #             count = line[key]
-        #             name = key + "_rgb.png"
-        #             writer.writerow([name, count])
-        #
-        # # Create a csv file of center points for the relevant set
-        # new_centers_file_path = os.path.join(current_set_data_path, current_dataset + "_" + dirType+ "_leaf_location.csv")
-        # with open(new_centers_file_path, 'w', newline='') as csvfile:
-        #     writer = csv.writer(csvfile)
-        #     for i in range(len(leaf_location_coord)):
-        #         line = leaf_location_coord[i]
-        #         name = line[0] + "_centers.png"
-        #         points = line[1]
-        #         for j in range(len(points)):
-        #             x = points[j][0]
-        #             y = points[j][1]
-        #             writer.writerow([name, x, y])
+        # Create a csv file of leaf counts for the relevant set
+        new_counts_file_path = os.path.join(current_set_data_path, new_data_folder + '_' +current_set_name + '.csv')
+
+        with open(new_counts_file_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for count, image_name in zip(current_set_files['leaf_counts'], current_set_files['rgb_images']):
+                subset_origin = current_set_files['rgb_images'][i].split('\\')[-2]
+                name = subset_origin + '_' + image_name.split('\\')[-1].split('_')[0] + "_rgb.png"
+                writer.writerow([name, count])
+
+        # Create a csv file of center points for the relevant set
+        new_centers_file_path = os.path.join(current_set_data_path, new_data_folder + '_' + current_set_name+ '_leaf_location.csv')
+        with open(new_centers_file_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for i in range(len(current_set_files['leaf_location_coord'])):
+                line = current_set_files['leaf_location_coord'][i]
+                name = line[0] + "_centers.png"
+                points = line[1]
+                for j in range(len(points)):
+                    x = points[j][0]
+                    y = points[j][1]
+                    writer.writerow([name, x, y])
 
 def create_set_files(leaf_counts, rgb_images_paths, masks_images_paths, centers_images_paths, leaf_location_coord, set_indices):
     set_files = {}
@@ -86,7 +87,7 @@ def main():
     np.random.seed(10)
     # Enter the names of the datasets you want to use:
     # choose any of A1-A4, or any combination of those
-    sub_datasets = ['A1', 'A2', 'A3']
+    sub_datasets = ['A2', 'A3']
 
     args = parse_args()
     args.ROOT_DIR = 'C:\\Users\\owner\\PycharmProjects\\Counting_in_Agri'
