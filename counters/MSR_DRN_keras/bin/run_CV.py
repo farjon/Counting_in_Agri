@@ -4,21 +4,13 @@ import sys
 import os
 import argparse
 import numpy as np
-from GetEnvVar import GetEnvVar
 import pandas as pd
 
-import math
 
-#Allow relative imports when being executed as script.
+from counters.MSR_DRN_keras.bin import train
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-#import keras_retinanet.bin
-__package__ = "keras_retinanet.bin"
-
-import train
-import train_reg
-import evaluate_LCC
-from ..preprocessing import create_csv_of_leaf_center
+from counters.MSR_DRN_keras.bin import evaluate_LCC
+from counters.MSR_DRN_keras.preprocessing import create_csv_of_leaf_center
 
 #from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 import matplotlib.pyplot as plt
