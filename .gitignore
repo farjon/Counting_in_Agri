@@ -20,4 +20,4 @@
 1.7.0'
 **/wandb/
 **/Results/
-**__pycache__/
+**/__pycache__/

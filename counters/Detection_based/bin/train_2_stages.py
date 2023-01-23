@@ -3,6 +3,8 @@ import torch
 import numpy as np
 import argparse
 
+from counters.results_graphs import counting_results
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
@@ -105,7 +107,8 @@ def main(args):
         train_yolov5(args)
 
     # Report results
-
+    images_names = os.listdir(test_folder)
+    mse = counting_results.report_mse(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
 
 if __name__ =='__main__':
     args = parse_args()
