@@ -29,7 +29,7 @@ def train_detectron2(args):
 
 
 def train_efficientDet(args):
-    cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_Regression', 'config',
+    cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_based', 'config',
                             'efficient_det_' + args.data + '_cfg')
     from EfficientDet_Pytorch.train import train as eff_train
     from counters.Detection_based.utils.create_detector_args import create_efficientDet_args

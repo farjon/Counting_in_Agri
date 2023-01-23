@@ -129,8 +129,7 @@ def split_to_tiles(args, tiles=10, pad=30):
                 'images': images,
                 'annotations': annotations
             }
-            json_fp = open(det_output_anno_file, 'w')
-            json_str = json.dumps(json_dict)
-            json_fp.write(json_str)
+            with open(det_output_anno_file, "w") as outfile:
+                json.dump(json_dict, outfile)
 
     print('finish splitting the images for train, test, and val directories')

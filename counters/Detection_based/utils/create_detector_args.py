@@ -14,7 +14,7 @@ def create_efficientDet_args(args, cfg_path):
     eff_det_args.es_patience = args.es_patience
     eff_det_args.data_path = args.data_path
     eff_det_args.log_path = args.log_path
-    eff_det_args.save_path = args.save_trained_models
+    eff_det_args.saved_path = args.save_trained_models
     eff_det_args.head_only = False
     eff_det_args.load_weights = None
     eff_det_args.num_workers = 0

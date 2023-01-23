@@ -2,8 +2,8 @@ import os
 import torch
 import numpy as np
 import argparse
-
 from counters.results_graphs import counting_results
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
@@ -17,14 +17,14 @@ def parse_args():
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient'
                                 'in case you choose yolov5, please add "_i" where i is the model size')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
-    parser.add_argument('-e', '--epochs', type=int, default=50, help='number of epochs for training')
+    parser.add_argument('-e', '--epochs', type=int, default=5, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
     parser.add_argument('-o', '--optim', type=str, default='sgd', help='choose optimizer adam / adamw / sgd')
     parser.add_argument('-ve', '--val_interval', type=int, default=2, help='run model validation every X epochs')
     parser.add_argument('-se', '--save_interval', type=int, default=100, help='save checkpoint every X steps')
-    parser.add_argument('-dt', '--det_test_thresh', type=float, default=0.2, help='detection threshold (for test), defualt is 0.2')
+    parser.add_argument('-dt', '--det_test_thresh', type=float, default=0.4, help='detection threshold (for test), defualt is 0.2')
     parser.add_argument('-iou', '--iou_threshold', type=float, default=0.2, help='iou threshold (for test), defualt is 0.2')
     parser.add_argument('--es_patience', type=int, default=0,
                         help='Early stopping\'s parameter: number of epochs with no improvement after which training will be stopped. Set to 0 to disable this technique.')
@@ -50,7 +50,7 @@ def main(args):
         labels_format = 'yolo'
 
     if args.split_images:
-        from utils.split_raw_images_anno_coco import split_to_tiles
+        from utils.tile_images.split_raw_images_anno_coco import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
         #TODO - make sure that the split function works on other data formats
@@ -92,7 +92,7 @@ def main(args):
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
         from counters.Detection_based.bin.train_detectors import train_detectron2
         from counters.Detection_based.bin.test_detectors import test_detectron2
-        train_detectron2(args)
+        # train_detectron2(args)
         images_counting_results, images_detection_results = test_detectron2(args)
 
     elif args.detector.split('_')[0] == 'efficientDet':
@@ -109,6 +109,7 @@ def main(args):
     # Report results
     images_names = os.listdir(test_folder)
     mse = counting_results.report_mse(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+    mae = counting_results.report_mae(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
 
 if __name__ =='__main__':
     args = parse_args()

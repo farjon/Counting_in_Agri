@@ -12,8 +12,8 @@ def create_cfg(args):
     cfg.SOLVER.IMS_PER_BATCH = 1
     cfg.SOLVER.BASE_LR = 0.001
     cfg.SOLVER.WARMUP_ITERS = 50
-    cfg.SOLVER.MAX_ITER = 1500 #adjust up if val mAP is still rising, adjust down if overfit
-    cfg.SOLVER.STEPS = (1000, 1500)
+    cfg.SOLVER.MAX_ITER = 150 #adjust up if val mAP is still rising, adjust down if overfit
+    cfg.SOLVER.STEPS = (100, 150)
     cfg.SOLVER.GAMMA = 0.05
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 64
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
