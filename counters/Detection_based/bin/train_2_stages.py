@@ -6,13 +6,14 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Banana', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
     parser.add_argument('-det', '--detector', type=str, default='RetinaNet', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
-                               'in case you choose efficientDet, please add "_i" where i is the compound coefficient')
+                               'in case you choose efficientDet, please add "_i" where i is the compound coefficient'
+                                'in case you choose yolov5, please add "_i" where i is the model size')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
     parser.add_argument('-e', '--epochs', type=int, default=50, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
@@ -59,7 +60,10 @@ def main(args):
     test_folder = os.path.join(args.data_path, 'test')
 
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
-        args.det_model = 'faster_rcnn_X_101_32x8d_FPN_3x.yaml'
+        if args.detector == 'fasterRCNN':
+            args.det_model = 'faster_rcnn_X_101_32x8d_FPN_3x.yaml'
+        else:
+            args.det_model = 'retinanet_R_50_FPN_3x.yaml'
         import detectron2_windows.detectron2
         from detectron2_windows.detectron2.utils.logger import setup_logger
         setup_logger()
@@ -84,21 +88,22 @@ def main(args):
 
     # --------------------------- Stage 1 - Detection ---------------------------
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
-        from counters.Detection_Regression.bin.train_detectors import train_detectron2
-        from counters.Detection_Regression.bin.test_detectors import test_detectron2
+        from counters.Detection_based.bin.train_detectors import train_detectron2
+        from counters.Detection_based.bin.test_detectors import test_detectron2
         train_detectron2(args)
         images_counting_results, images_detection_results = test_detectron2(args)
 
     elif args.detector.split('_')[0] == 'efficientDet':
-        from counters.Detection_Regression.bin.train_detectors import train_efficientDet
-        from counters.Detection_Regression.bin.test_detectors import test_efficientDet
+        from counters.Detection_based.bin.train_detectors import train_efficientDet
+        from counters.Detection_based.bin.test_detectors import test_efficientDet
         best_epoch, eff_det_args = train_efficientDet(args)
         images_counting_results, images_detection_results = test_efficientDet(args, eff_det_args, best_epoch)
 
     elif args.detector.split('_')[0] == 'yolov5':
-        from counters.Detection_Regression.bin.train_detectors import train_yolov5
-        from counters.Detection_Regression.bin.test_detectors import test_yolov5
+        from counters.Detection_based.bin.train_detectors import train_yolov5
+        from counters.Detection_based.bin.test_detectors import test_yolov5
         train_yolov5(args)
+
     # Report results
 
 

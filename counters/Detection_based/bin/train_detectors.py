@@ -6,7 +6,7 @@ def train_detectron2(args):
     from detectron2_windows.detectron2.engine import DefaultTrainer
     from detectron2_windows.detectron2.evaluation import COCOEvaluator
     from detectron2_windows.detectron2.checkpoint import DetectionCheckpointer
-    from counters.Detection_Regression.config.adjust_detectron_cfg import create_cfg
+    from counters.Detection_based.config.adjust_detectron_cfg import create_cfg
 
     cfg = create_cfg(args)
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -17,7 +17,7 @@ def train_detectron2(args):
             if output_folder is None:
                 os.makedirs("coco_eval", exist_ok=True)
                 output_folder = "coco_eval"
-            return COCOEvaluator(dataset_name, cfg, False, output_folder)
+            return COCOEvaluator(dataset_name, cfg, False, output_folder, use_fast_impl=False)
 
     cfg.OUTPUT_DIR = os.path.join(args.save_trained_models, args.detector + '_' + str(args.exp_number))
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -32,7 +32,7 @@ def train_efficientDet(args):
     cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_Regression', 'config',
                             'efficient_det_' + args.data + '_cfg')
     from EfficientDet_Pytorch.train import train as eff_train
-    from counters.Detection_Regression.utils.create_detector_args import create_efficientDet_args
+    from counters.Detection_based.utils.create_detector_args import create_efficientDet_args
 
     eff_det_args = create_efficientDet_args(args, cfg_path)
 
@@ -44,7 +44,7 @@ def train_efficientDet(args):
 
 
 def train_yolov5(args):
-    from counters.Detection_Regression.utils.create_detector_args import create_yolov5_train_args
+    from counters.Detection_based.utils.create_detector_args import create_yolov5_train_args
     # configuration files
     data_yaml_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_Regression', 'yolo_data_yaml',
                                   args.data + '.yaml')

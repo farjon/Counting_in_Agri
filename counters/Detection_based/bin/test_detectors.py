@@ -5,12 +5,9 @@ import torch
 
 def test_detectron2(args):
     # Run inference over the test set towards the regression phase
-    from counters.Detection_Regression.config.adjust_detectron_cfg import create_cfg
-    from detectron2.data import DatasetCatalog, MetadataCatalog, build_detection_test_loader
-    from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+    from counters.Detection_based.config.adjust_detectron_cfg import create_cfg
     from detectron2.engine import DefaultPredictor
     import cv2
-    from glob import glob
 
     cfg = create_cfg(args)
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -136,7 +133,7 @@ def test_efficientDet(args, eff_det_args, best_epoch):
 
 def test_yolov5(args, yolo_det_args):
     from yolov5.detect import run as yolov5_detect
-    from counters.Detection_Regression.utils.create_detector_args import create_yolov5_infer_args
+    from counters.Detection_based.utils.create_detector_args import create_yolov5_infer_args
     yolo_infer_args = create_yolov5_infer_args(args, yolo_det_args)
     os.makedirs(yolo_infer_args.project, exist_ok=True)
     # TODO - detect.run does not return anything, create a wrapper

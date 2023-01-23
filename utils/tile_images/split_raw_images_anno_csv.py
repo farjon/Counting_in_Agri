@@ -3,7 +3,7 @@ import pandas as pd
 from PIL import Image
 from glob import glob
 
-def find_anno(anno_file, box):
+def find_anno_detection(anno_file, box):
     bbox_in_farme = {
         'x_min': [],
         'y_min': [],
@@ -48,7 +48,10 @@ def split_to_tiles(args, tiles=10, pad=30):
             'GT_number': []
         }
         image_format = glob(os.path.join(to_tile_dir, '*'))[0][-3:]
-        anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco', 'annotations', 'instances_' + current_set + '.csv'))
+        if args.labels_format == 'coco':
+            anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco', 'annotations', 'instances_' + current_set + '.json'))
+        elif args.labels_format =='csv':
+            anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'DATA', args.data, 'csv', current_set + '.csv'))
         for k, file_name in enumerate(glob(os.path.join(to_tile_dir, '*.'+image_format))):
             image_name = file_name.split('\\')[-1].split('.')[0] # '/' to split the path, '.' to split the ending
             # anno_file = pd.read_csv(os.path.join(args.ROOT_DIR, 'Data', args.data, 'annotations', current_set, image_name + '.csv'))
@@ -80,7 +83,7 @@ def split_to_tiles(args, tiles=10, pad=30):
                     # cropping the sub image
                     cropped_frame = im.crop(box)
                     # collecting annotations for sub image
-                    bbox_in_cropped_frame = find_anno(anno_file, box)
+                    bbox_in_cropped_frame = find_anno_detection(anno_file, box)
                     # in case that the image has no object - skip it
                     if bbox_in_cropped_frame.shape[0] == 0:
                         continue

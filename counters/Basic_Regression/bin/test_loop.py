@@ -1,5 +1,4 @@
 import torch
-import wandb
 import numpy as np
 from tqdm import tqdm
 
@@ -23,6 +22,7 @@ def test_models(args, test_dataset, loss_func, models):
         print('Test. model - {}. loss: {:1.5f}.'.format(
                 model, mean_test_loss))
         models_scores.append(mean_test_loss)
-    wandb.log({'final_MSE':models_scores[0]})
-    wandb.log({'best_MSE':models_scores[1]})
+    print(f'final_MSE: {models_scores[0]}')
+    print(f'best_MSE: {models_scores[1]}')
+
     return models_scores

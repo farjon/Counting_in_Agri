@@ -2,7 +2,6 @@ import os
 import numpy as np
 import torch
 import argparse
-import wandb
 from counters.Basic_Regression.bin.train_loop import train_and_eval
 from counters.Basic_Regression.bin.test_loop import test_models
 from torch.utils.data import DataLoader
@@ -12,15 +11,15 @@ from torchvision import transforms
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Melons_split', help='choose a dataset')
     parser.add_argument('-lf', '--labels_format', type=str, default='csv', help='labels format can be .csv / coco (.json)')
-    parser.add_argument('-si', '--split_images', type=bool, default=True, help='should we split the images into tiles')
+    parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=10, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
     parser.add_argument('-m', '--model_type', type=str, default='resnet50', help='choose a deep model')
     parser.add_argument('-b', '--batch_size', type=int, default=10, help='batch size for training')
-    parser.add_argument('-e', '--epochs', type=int, default=1000, help='number of epochs for training')
+    parser.add_argument('-e', '--epochs', type=int, default=100, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
@@ -33,7 +32,7 @@ def parse_args():
 
 def create_dataset(args, train_dataset_params, test_dataset_params):
     if args.split_images:
-        from utils.split_raw_images_anno_csv import split_to_tiles
+        from utils.tile_images.split_raw_images_anno_csv import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split')
@@ -87,7 +86,6 @@ def main(args):
     np.random.seed(10)
 
     # --------------------------- Start edit --------------------------- #
-    wandb.init(project=f'{args.data}_{args.exp_number}', name=f'{args.data}_{args.exp_number}')
     # setting up path to save pretrained models
     args.save_downloaded_weights = os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained')
     torch.hub.set_dir(args.save_downloaded_weights)
@@ -137,7 +135,7 @@ def main(args):
     models_scores = test_models(args, test_dataset, loss_func, models = [final_model, best_model])
 
     # Report results
-    # wandb is printing a summary of the results
+    #
 
 if __name__ =='__main__':
     args = parse_args()
