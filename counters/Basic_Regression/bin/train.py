@@ -6,12 +6,12 @@ from counters.Basic_Regression.bin.train_loop import train_and_eval
 from counters.Basic_Regression.bin.test_loop import test_models
 from torch.utils.data import DataLoader
 from torchvision import transforms
-
+import json
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Melons_split', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
     parser.add_argument('-lf', '--labels_format', type=str, default='csv', help='labels format can be .csv / coco (.json)')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
@@ -20,12 +20,12 @@ def parse_args():
     parser.add_argument('-m', '--model_type', type=str, default='resnet50', help='choose a deep model')
     parser.add_argument('-b', '--batch_size', type=int, default=10, help='batch size for training')
     parser.add_argument('-e', '--epochs', type=int, default=100, help='number of epochs for training')
-    parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
+    parser.add_argument('-exp', '--exp_number', type=int, default=1, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
     parser.add_argument('-o', '--optim', type=str, default='sgd', help='choose optimizer adam / adamw / sgd')
-    parser.add_argument('-ve', '--val_interval', type=int, default=5, help='run model validation every X epochs')
-    parser.add_argument('--es_patience', type=int, default=5,
+    parser.add_argument('-ve', '--val_interval', type=int, default=2, help='run model validation every X epochs')
+    parser.add_argument('--es_patience', type=int, default=15,
                         help='Early stopping\'s parameter: number of epochs with no improvement after which training will be stopped. Set to 0 to disable this technique.')
     args = parser.parse_args()
     return args
@@ -135,7 +135,7 @@ def main(args):
     models_scores = test_models(args, test_dataset, loss_func, models = [final_model, best_model])
 
     # Report results
-    #
+    json.dump(models_scores, open(os.path.join(args.save_checkpoint_path, 'models_scores.json'), 'wb'))
 
 if __name__ =='__main__':
     args = parse_args()
