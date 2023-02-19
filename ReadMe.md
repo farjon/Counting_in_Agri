@@ -1,17 +1,35 @@
 # Counting in Agriculture
 
-## Datasets
-All data should be in 'coco' style: \
-Dataset_dir\
-&nbsp;&nbsp;&nbsp;&nbsp; images\
-&nbsp;&nbsp;&nbsp;&nbsp; annotations\
-&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp; train &nbsp;&nbsp;&nbsp;&nbsp; |
-&nbsp;&nbsp;&nbsp;&nbsp; test &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | 
-&nbsp;&nbsp;&nbsp;val 
+This repository contains an implementation of a machine learning algorithm for image classification. The algorithm is designed to classify images into different categories, such as animals, vehicles, and landscapes.
 
-* The training pipes assume the data is already splitted into train-val-test datasets
-* If the images should be splitted into tiles, the first run will split it 
+## Repository Structure
+
+The repository is structured as follows:
+
+
+## Datasets
+
+
+|-- data\
+| |-- coco\
+| |-- train\
+| | |-- animals\
+| | |-- vehicles\
+| | |-- landscapes\
+| |-- test\
+| | |-- animals\
+| | |-- vehicles\
+| | |-- landscapes\
+|-- src\
+| |-- model.py\
+| |-- preprocess.py\
+| |-- evaluate.py\
+|-- notebooks\
+| |-- example.ipynb\
+|-- README.md
+
+* The training pipes assume the data is already tiled into train-val-test datasets
+* If the images should be tiled into tiles, the first run will split it 
 
 
 ## Detectors

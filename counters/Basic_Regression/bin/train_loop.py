@@ -3,8 +3,7 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import datetime
-import wandb
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer, scheduler):
 
@@ -36,7 +35,6 @@ def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer
             step += 1
 
         epoch_loss = running_loss / len(train_dataset)
-        wandb.log({'epoch_loss': epoch_loss.item(), 'LR': optimizer.param_groups[0]['lr']})
         scheduler.step(epoch_loss.item())
 
         if epoch % args.val_interval == 0:
@@ -63,7 +61,7 @@ def train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer
                 save_model_path = os.path.join(args.save_checkpoint_path, f'best_{args.model_type}_model.pth')
                 torch.save(model.state_dict(), save_model_path)
 
-            wandb.log({'val_loss': mean_val_loss})
+            print(f'val_loss: {mean_val_loss}')
 
             model.train()
 

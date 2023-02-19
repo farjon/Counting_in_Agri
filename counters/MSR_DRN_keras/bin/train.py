@@ -34,8 +34,8 @@ def model_with_weights(model, weights, skip_mismatch):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='DRN', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_name', type=str, default='A1')
+    parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
+    parser.add_argument('--dataset_name', type=str, default='Banana')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--lr', type=float, default=1e-5)
@@ -160,22 +160,22 @@ def create_generators(args):
     train_generator = CSVGenerator_MSR_DRN(
         mode='training',
         model_type=args.model_type,
-        class_name='leafs',
-        csv_object_number_file=args.train_csv_leaf_number_file,
-        csv_object_location_file=args.train_csv_leaf_location_file,
+        class_name=args.class_name,
+        csv_object_number_file=args.train_csv_object_number_file,
+        csv_object_location_file=args.train_csv_object_location_file,
         transform_generator=transform_generator,
         batch_size=args.batch_size,
         image_min_side=args.image_min_side,
         image_max_side=args.image_max_side
     )
 
-    if args.val_csv_leaf_number_file:
+    if args.val_csv_object_number_file:
         validation_generator = CSVGenerator_MSR_DRN(
             mode='training',
             model_type=args.model_type,
-            classes={'leafs' : 0},
-            csv_object_number_file=args.val_csv_leaf_number_file,
-            csv_object_location_file=args.val_csv_leaf_location_file,
+            classes={f'{args.class_name}' : 0},
+            csv_object_number_file=args.val_csv_object_number_file,
+            csv_object_location_file=args.val_csv_object_location_file,
             batch_size=args.batch_size,
             image_min_side=args.image_min_side,
             image_max_side=args.image_max_side
@@ -257,16 +257,28 @@ if __name__ == '__main__':
     args.random_transform = True
     args.evaluation = True
     args.backbone = 'resnet50'
-    args.snapshot_path = os.path.join(args.ROOT_DIR, 'Trained_Models', f'{args.model_type}_Models_snapshots', args.model_type, args.dataset_name, f'exp_{str(args.exp_num)}')
-    args.tensorboard_dir = os.path.join(args.ROOT_DIR, 'Results', args.model_type, args.dataset_name, f'exp_{str(args.exp_num)}', 'log_dir')
-    args.save_path = os.path.join(args.ROOT_DIR, 'Results', args.model_type, args.dataset_name, f'exp_{str(args.exp_num)}', 'main_results')
+    args.snapshot_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.dataset_name, f'{args.model_type}_Models_snapshots', args.model_type, f'exp_{str(args.exp_num)}')
+    args.tensorboard_dir = os.path.join(args.ROOT_DIR, 'Results', args.dataset_name, args.model_type, f'exp_{str(args.exp_num)}', 'log_dir')
+    args.save_path = os.path.join(args.ROOT_DIR, 'Results', args.dataset_name, args.model_type, f'exp_{str(args.exp_num)}', 'main_results')
+
+    if args.dataset_name == 'Grapes':
+        args.class_name = 'grape'
+    elif args.dataset_name == 'WheatSpikelets':
+        args.class_name = 'wheat_spikelet'
+    elif args.dataset_name == 'BananaLeaves':
+        args.class_name = 'banana_leaf'
+    elif args.dataset_name == 'Banana':
+        args.class_name = 'banana'
+    elif args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
+        args.class_name = 'leafs'
     # ---------------- END ----------------
+
     # if snapshot is True - model will be uploaded from previous checkpoint (in args.snapshop_path) and continue from there
     args.snapshot = None
 
-    if args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'training', args.dataset_name)
-
+    # if args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
+    #     args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'training', args.dataset_name)
+    args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.dataset_name, 'MSR_DRN')
     # model variant
     if not args.model_type in ['DRN', 'MSR_P3_P7_Gauss_MLE', 'MSR_P3_L2']:
         raise('model type unknown, should be either MSR or DRN')
@@ -275,19 +287,19 @@ if __name__ == '__main__':
         args.reduceLR_patience = 3
         args.reduceLR_factor = 0.1
         # adding object locations maps
-        args.train_csv_leaf_location_file = os.path.join(args.data_path, 'train',
-                                                         args.dataset_name + '_Train_leaf_location.csv')
-        args.val_csv_leaf_location_file = os.path.join(args.data_path, 'val',
-                                                       args.dataset_name + '_Val_leaf_location.csv')
+        args.train_csv_object_location_file = os.path.join(args.data_path, 'train',
+                                                         args.dataset_name + '_train_location.csv')
+        args.val_csv_object_location_file = os.path.join(args.data_path, 'val',
+                                                       args.dataset_name + '_val_location.csv')
     else:
         args.reduce_lr = True
         args.reduceLR_patience = 8
         args.reduceLR_factor = 0.05
-        args.train_csv_leaf_location_file = ''
-        args.val_csv_leaf_location_file = ''
+        args.train_csv_object_location_file = ''
+        args.val_csv_object_location_file = ''
     # the number of object is obligatory for all model variants
-    args.train_csv_leaf_number_file = os.path.join(args.data_path, 'train', args.dataset_name+'_Train.csv')
-    args.val_csv_leaf_number_file = os.path.join(args.data_path, 'val', args.dataset_name+'_Val.csv')
+    args.train_csv_object_number_file = os.path.join(args.data_path, 'train', args.dataset_name+'_train.csv')
+    args.val_csv_object_number_file = os.path.join(args.data_path, 'val', args.dataset_name+'_val.csv')
 
 
     args.imagenet_weights = True
