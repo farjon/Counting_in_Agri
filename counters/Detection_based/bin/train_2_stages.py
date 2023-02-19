@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import pandas as pd
 import argparse
 from counters.results_graphs import counting_results
 
@@ -8,7 +9,7 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='BananaBunch', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
@@ -60,8 +61,9 @@ def main(args):
     else:
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', labels_format)
 
-
-    test_folder = os.path.join(args.data_path, 'test')
+    # what is the test set?
+    # in case no test set exists, use validation set
+    args.test_set = 'test' if os.path.exists(os.path.join(args.data_path, 'test')) else 'val'
 
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
         if args.detector == 'fasterRCNN':
@@ -87,6 +89,8 @@ def main(args):
     args.log_path = os.path.join(args.ROOT_DIR, 'Logs', 'EfficientDet')
     os.makedirs(args.log_path, exist_ok=True)
 
+    args.save_counting_results = os.path.join(args.ROOT_DIR, 'Results', args.data, 'Detection')
+
     # args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, 'Detection', 'model' str(args.exp_number))
     # os.makedirs(args.save_checkpoint_path, exist_ok=True)
 
@@ -94,7 +98,7 @@ def main(args):
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
         from counters.Detection_based.bin.train_detectors import train_detectron2
         from counters.Detection_based.bin.test_detectors import test_detectron2
-        train_detectron2(args)
+        # train_detectron2(args)
         images_counting_results, images_detection_results = test_detectron2(args)
 
     elif args.detector.split('_')[0] == 'efficientDet':
@@ -107,11 +111,21 @@ def main(args):
         from counters.Detection_based.bin.train_detectors import train_yolov5
         from counters.Detection_based.bin.test_detectors import test_yolov5
         train_yolov5(args)
+        images_counting_results, images_detection_results = test_yolov5(args)
 
     # Report results
-    images_names = os.listdir(test_folder)
-    mse = counting_results.report_mse(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
-    mae = counting_results.report_mae(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+    mse_dict, mse = counting_results.report_mse(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+    mae_dict, mae = counting_results.report_mae(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+    agreement_dict, agreement = counting_results.report_agreement(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+    mrd_dict, mrd = counting_results.report_mrd(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+    r_squared = counting_results.report_r_squared(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
+
+    # save results to csv
+    results_df = pd.DataFrame({'image_name': images_counting_results['image_name'], 'gt_count': images_counting_results['gt_count'], 'pred_count': images_counting_results['pred_count']})
+    results_df.to_csv(os.path.join(args.save_counting_results, 'complete_results.csv'), index=False)
+
+    metric_results_df = pd.DataFrame({'mse': mse, 'mae': mae, 'agreement': agreement, 'mrd': mrd, 'r_squared': r_squared}, index=[0])
+    metric_results_df.to_csv(os.path.join(args.save_counting_results, 'metric_results.csv'), index=False)
 
 if __name__ =='__main__':
     args = parse_args()

@@ -2,7 +2,7 @@ import os
 import json
 import glob
 import torch
-
+shutil
 def test_detectron2(args):
     # Run inference over the test set towards the regression phase
     from counters.Detection_based.config.adjust_detectron_cfg import create_cfg
@@ -18,8 +18,7 @@ def test_detectron2(args):
     cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
     cfg.DATASETS.TEST = ("test",)
     predictor = DefaultPredictor(cfg)
-    # TODO - add an score threshold
-    cfg.MODEL.RETINANET.SCORE_THRESH_TEST = 0.8
+    cfg.MODEL.RETINANET.SCORE_THRESH_TEST = args.det_test_thresh
     with open(f'{args.data_path}/test/instances_test.json', 'rt', encoding='UTF-8') as annotations:
         coco = json.load(annotations)
 
@@ -135,10 +134,56 @@ def test_efficientDet(args, eff_det_args, best_epoch):
             # TODO - add the option to visualize results
         return images_counting_results, images_detection_results
 
-def test_yolov5(args, yolo_det_args):
+def test_yolov5(args):
     from yolov5.detect import run as yolov5_detect
     from counters.Detection_based.utils.create_detector_args import create_yolov5_infer_args
-    yolo_infer_args = create_yolov5_infer_args(args, yolo_det_args)
+    yolo_infer_args = create_yolov5_infer_args(args)
     os.makedirs(yolo_infer_args.project, exist_ok=True)
     # TODO - detect.run does not return anything, create a wrapper
+    if os.path.exists(os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels')):
+        shutil.rmtree(os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels'))
     yolov5_detect(**vars(yolo_infer_args))
+
+    images_counting_results = {
+        'image_name': [],
+        'gt_count': [],
+        'pred_count': []
+    }
+
+    images_detection_results = {
+        'image_name': [],
+        'gt_bboxes': [],
+        'pred_bboxes': []
+    }
+    labels_dir = os.path.join(args.data_path, 'labels', args.test_set)
+    predictions_dir = os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels')
+    for image_name in os.listdir(predictions_dir):
+        # collect image names for both counting and detection
+        images_counting_results['image_name'].append(image_name)
+        images_detection_results['image_name'].append(image_name)
+
+        # read annotation text file
+        with open(os.path.join(labels_dir, image_name), 'rt') as f:
+            annotations = f.readlines()
+        collected_annotations = []
+        for ann in annotations:
+            ann = ann.split(' ')
+            ann = [float(a) for a in ann]
+            ann[0] = int(ann[0])
+            collected_annotations.append(ann)
+        images_detection_results['gt_bboxes'].append(collected_annotations)
+        images_counting_results['gt_count'].append(len(annotations))
+
+        # read prediction text file
+        with open(os.path.join(predictions_dir, image_name), 'rt') as f:
+            predictions = f.readlines()
+        collected_predictions = []
+        for pred in predictions:
+            pred = pred.split(' ')
+            pred = [float(p) for p in pred]
+            pred[0] = int(pred[0])
+            collected_predictions.append(pred)
+        images_detection_results['pred_bboxes'].append(collected_predictions)
+        images_counting_results['pred_count'].append(len(predictions))
+
+    return images_counting_results, images_detection_results
