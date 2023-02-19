@@ -11,8 +11,7 @@ import json
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
-    parser.add_argument('-lf', '--labels_format', type=str, default='csv', help='labels format can be .csv / coco (.json)')
+    parser.add_argument('-d', '--data', type=str, default='Banana', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=10, help='padding size in case of splitting')
@@ -20,7 +19,7 @@ def parse_args():
     parser.add_argument('-m', '--model_type', type=str, default='resnet50', help='choose a deep model')
     parser.add_argument('-b', '--batch_size', type=int, default=10, help='batch size for training')
     parser.add_argument('-e', '--epochs', type=int, default=100, help='number of epochs for training')
-    parser.add_argument('-exp', '--exp_number', type=int, default=1, help='number of current experiment')
+    parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
     parser.add_argument('-o', '--optim', type=str, default='sgd', help='choose optimizer adam / adamw / sgd')
@@ -31,20 +30,17 @@ def parse_args():
     return args
 
 def create_dataset(args, train_dataset_params, test_dataset_params):
-    if args.split_images:
-        from utils.tile_images.split_raw_images_anno_csv import split_to_tiles
+    if args.split_images and 'split' not in args.data:
+        from utils.tile_images.split_raw_images_anno_coco import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split')
     else:
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data)
-    if args.labels_format == 'csv':
-        from counters.Basic_Regression.dataset.reg_dataset import Reg_Agri_Dataset_csv as Reg_Agri_Dataset
-    elif args.labels_format == 'coco':
-        from counters.Basic_Regression.dataset.reg_dataset import Reg_Agri_Dataset_json as Reg_Agri_Dataset
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Direct_Regression')
+    from counters.Basic_Regression.dataset.reg_dataset import Reg_Agri_Dataset_csv as Reg_Agri_Dataset
     # train dataset loader
     train_dataset = DataLoader(
-        Reg_Agri_Dataset(args, args.data_path, 'train',
+        Reg_Agri_Dataset(args.data_path, 'train',
                         transform=transforms.Compose([
                             transforms.RandomHorizontalFlip(),
                             transforms.RandomRotation(20),
@@ -56,16 +52,17 @@ def create_dataset(args, train_dataset_params, test_dataset_params):
 
     # validation dataset loader
     val_dataset = DataLoader(
-        Reg_Agri_Dataset(args, args.data_path, 'val',
+        Reg_Agri_Dataset(args.data_path, 'val',
                         transform=transforms.Compose([
                             transforms.Resize([args.input_size, args.input_size]),
                             transforms.ToTensor(),
                             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])),
         **test_dataset_params)
 
+    test_set = 'test' if os.path.isdir(os.path.join(args.data_path, 'test')) else 'val'
     # test dataset loader
     test_dataset = DataLoader(
-        Reg_Agri_Dataset(args, args.data_path, 'test',
+        Reg_Agri_Dataset(args.data_path, test_set,
                         transform=transforms.Compose([
                             transforms.Resize([args.input_size, args.input_size]),
                             transforms.ToTensor(),
@@ -90,7 +87,10 @@ def main(args):
     args.save_downloaded_weights = os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained')
     torch.hub.set_dir(args.save_downloaded_weights)
     args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, 'Basic_Regression', str(args.exp_number))
+    args.save_results_path = os.path.join(args.ROOT_DIR, 'Results', args.data, 'Basic_Regression', str(args.exp_number))
+
     os.makedirs(args.save_checkpoint_path, exist_ok=True)
+    os.makedirs(args.save_results_path, exist_ok=True)
     # Create data loaders
     if args.model_type == 'resnet50':
         args.input_size = 224
@@ -119,23 +119,25 @@ def main(args):
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.05, patience=5, verbose=True, threshold=1e-6)
 
-    # Train model
-    train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer, scheduler)
+    best_model_path = os.path.join(args.save_checkpoint_path, f'best_{args.model_type}_model.pth')
+    final_model_path = os.path.join(args.save_checkpoint_path, f'final_{args.model_type}_model.pth')
+
+    if os.path.exists(best_model_path) == False:
+        # Train model
+        train_and_eval(args, train_dataset, val_dataset, model, loss_func, optimizer, scheduler)
 
     best_model = Reg_Model()
-    best_model.load_state_dict(torch.load(os.path.join(
-        args.save_checkpoint_path, f'best_{args.model_type}_model.pth'
-    )))
+    best_model.load_state_dict(torch.load(best_model_path))
+
     final_model = Reg_Model()
-    final_model.load_state_dict(torch.load(os.path.join(
-        args.save_checkpoint_path, f'final_{args.model_type}_model.pth'
-    )))
+    final_model.load_state_dict(torch.load(final_model_path))
 
     # Test Models
     models_scores = test_models(args, test_dataset, loss_func, models = [final_model, best_model])
 
     # Report results
-    json.dump(models_scores, open(os.path.join(args.save_checkpoint_path, 'models_scores.json'), 'wb'))
+    with open(os.path.join(args.save_results_path, 'models_scores.json'), 'w') as f:
+        json.dump(models_scores, f, indent=4)
 
 if __name__ =='__main__':
     args = parse_args()

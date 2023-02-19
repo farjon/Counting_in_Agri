@@ -1,5 +1,7 @@
 import os
 import json
+
+import pandas as pd
 from PIL import Image
 from glob import glob
 
@@ -47,25 +49,55 @@ def find_anno(annotations_for_image, box):
 
     return bbox_in_farme
 
-def split_to_tiles(args, tiles=10, pad=30):
+def split_to_tiles(args, tiles=10, pad=30, MSR_DRN=False):
+    """
+    This function transform the raw images and annotations to tiles based on coco format annotations
+    and creates all three annotation formats - detection (coco format), direct regression (csv format)
+    if MSR_DRN is True, it will create the annotations for the MSR_DRN model
+    :param args:
+    :param tiles:
+    :param pad:
+    :param MSR_DRN:
+    :return:
+    """
     set_to_split = ['train', 'test', 'val']
     output_dir = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split')
     os.makedirs(output_dir, exist_ok=True)
     for current_set in set_to_split:
-        to_tile_dir = os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco', current_set)
-        to_tile_annotations_file = os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco', 'annotations', 'instances_' + current_set + '.json')
-        imgs_output_dir = os.path.join(output_dir, 'coco', current_set)
-        det_output_anno_dir = os.path.join(output_dir, 'coco', 'annotations')
+        # input information
+        to_tile_dir = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', 'coco', current_set)
+        to_tile_annotations_file = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', 'coco', 'annotations', 'instances_' + current_set + '.json')
+        # coco output information
+        det_imgs_output_dir = os.path.join(output_dir, 'Detection', 'coco', current_set)
+        det_output_anno_dir = os.path.join(output_dir, 'Detection', 'coco', 'annotations')
         det_output_anno_file = os.path.join(det_output_anno_dir, 'instances_' + current_set + '.json')
-        count_output_anno_dir = os.path.join(output_dir, 'regression annotations')
-        os.makedirs(imgs_output_dir, exist_ok=True)
+        # direct regression output information
+        count_output_imgs_dir = os.path.join(output_dir, 'Direct_regression', current_set)
+        count_output_anno_dir = os.path.join(output_dir, 'Direct_regression', 'annotations')
+        count_output_anno_file = os.path.join(count_output_anno_dir, current_set + '.csv')
+        # MSR_DRN output information
+        if MSR_DRN:
+            msr_drn_output_anno_dir = os.path.join(output_dir, 'MSR_DRN', current_set)
+            os.makedirs(msr_drn_output_anno_dir, exist_ok=True)
+
+        os.makedirs(det_imgs_output_dir, exist_ok=True)
         os.makedirs(det_output_anno_dir, exist_ok=True)
+        os.makedirs(count_output_imgs_dir, exist_ok=True)
         os.makedirs(count_output_anno_dir, exist_ok=True)
+
+        # coco format
         categories = [{'supercategory': None, 'id': 1, 'name': args.data}]
         images = []
         annotations = []
         image_id = 0
         annotation_id = 0
+
+        # count format
+        collect_count_annotations = {
+            'image_name': [],
+            'count': []
+        }
+
         anno_file = json.load(open(to_tile_annotations_file))
         for image_desc in anno_file['images']:
             image_name = image_desc['file_name']
@@ -79,7 +111,7 @@ def split_to_tiles(args, tiles=10, pad=30):
             end_of_height = im_height // h_step - 1
             for i in range(im_height // h_step):
                 for j in range(im_widht // w_step):
-                    sub_image_name = image_name.split('.JPG')[0] + "_" + str(sub_image_counter) +'.jpg'
+                    sub_image_name = image_name.split('.')[0] + "_" + str(sub_image_counter) +'.jpg'
                     sub_image_counter += 1
                     if j < end_of_width:
                         w_s = 0
@@ -103,7 +135,10 @@ def split_to_tiles(args, tiles=10, pad=30):
                     if len(bbox_in_cropped_frame['x_min']) == 0:
                         continue
                     # saving cropped image
-                    cropped_frame.save(os.path.join(imgs_output_dir, sub_image_name))
+                    cropped_frame.save(os.path.join(det_imgs_output_dir, sub_image_name))
+                    cropped_frame.save(os.path.join(count_output_imgs_dir, sub_image_name))
+
+                    # collect coco format annotations
                     sub_image_w = cropped_frame.size[0]
                     sub_image_h = cropped_frame.size[1]
                     images.append({
@@ -123,13 +158,22 @@ def split_to_tiles(args, tiles=10, pad=30):
                                             'iscrowd': 0,
                                             'ignore': 0})
                         annotation_id += 1
-                    image_id += 1
-            json_dict = {
-                'categories': categories,
-                'images': images,
-                'annotations': annotations
-            }
-            with open(det_output_anno_file, "w") as outfile:
-                json.dump(json_dict, outfile)
 
+                    # collect count format annotations
+                    collect_count_annotations['image_name'].append(sub_image_name)
+                    collect_count_annotations['count'].append(len(bbox_in_cropped_frame['x_min']))
+
+                    image_id += 1
+        # dump coco format annotations
+        json_dict = {
+            'categories': categories,
+            'images': images,
+            'annotations': annotations
+        }
+        with open(det_output_anno_file, "w") as outfile:
+            json.dump(json_dict, outfile)
+        with open(os.path.join(det_imgs_output_dir, f'instances_{current_set}.json'), "w") as outfile:
+            json.dump(json_dict, outfile)
+        # dump count format annotations
+        pd.DataFrame(collect_count_annotations).to_csv(count_output_anno_file, index=False)
     print('finish splitting the images for train, test, and val directories')

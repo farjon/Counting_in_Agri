@@ -8,7 +8,7 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
@@ -17,12 +17,12 @@ def parse_args():
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient'
                                 'in case you choose yolov5, please add "_i" where i is the model size')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
-    parser.add_argument('-e', '--epochs', type=int, default=5, help='number of epochs for training')
+    parser.add_argument('-e', '--epochs', type=int, default=50, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')
     parser.add_argument('-o', '--optim', type=str, default='sgd', help='choose optimizer adam / adamw / sgd')
-    parser.add_argument('-ve', '--val_interval', type=int, default=2, help='run model validation every X epochs')
+    parser.add_argument('-ve', '--val_interval', type=int, default=5, help='run model validation every X epochs')
     parser.add_argument('-se', '--save_interval', type=int, default=100, help='save checkpoint every X steps')
     parser.add_argument('-dt', '--det_test_thresh', type=float, default=0.4, help='detection threshold (for test), defualt is 0.2')
     parser.add_argument('-iou', '--iou_threshold', type=float, default=0.2, help='iou threshold (for test), defualt is 0.2')
@@ -48,15 +48,17 @@ def main(args):
         labels_format = 'coco'
     elif args.detector.split('_')[0] == 'yolov5':
         labels_format = 'yolo'
+    else:
+        raise ValueError('Detector not supported')
 
     if args.split_images:
         from utils.tile_images.split_raw_images_anno_coco import split_to_tiles
         print('Notice - to split the images, bbox annotations are needed')
         split_to_tiles(args, args.num_of_tiles, args.padding)
         #TODO - make sure that the split function works on other data formats
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split', labels_format)
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split', 'Detection', labels_format)
     else:
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, labels_format)
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', labels_format)
 
 
     test_folder = os.path.join(args.data_path, 'test')
@@ -85,14 +87,14 @@ def main(args):
     args.log_path = os.path.join(args.ROOT_DIR, 'Logs', 'EfficientDet')
     os.makedirs(args.log_path, exist_ok=True)
 
-    # args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, str(args.exp_number))
+    # args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, 'Detection', 'model' str(args.exp_number))
     # os.makedirs(args.save_checkpoint_path, exist_ok=True)
 
     # --------------------------- Stage 1 - Detection ---------------------------
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
         from counters.Detection_based.bin.train_detectors import train_detectron2
         from counters.Detection_based.bin.test_detectors import test_detectron2
-        # train_detectron2(args)
+        train_detectron2(args)
         images_counting_results, images_detection_results = test_detectron2(args)
 
     elif args.detector.split('_')[0] == 'efficientDet':

@@ -20,7 +20,7 @@ class Backbone(object):
             '_smooth_l1'        : losses.smooth_l1(),
             '_focal'            : losses.focal(),
             '_focal_DRN'        : losses.focal_DRN(),
-            '_mu_sig_gyf'       : losses.mu_sigma_MSR(),
+            '_mu_sigma_MSR'    : losses.mu_sigma_MSR(),
             '_mu_sig_gyf_L1'    : losses.mu_sig_gyf_L1(),
             'MLE_layer'         : layers.MLE_layer
         }

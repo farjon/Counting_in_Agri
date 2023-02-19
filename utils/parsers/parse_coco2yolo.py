@@ -29,18 +29,18 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Annotations parser from COCO to YOLOs')
     # --------------------------- Data Arguments ---------------------------
     parser.add_argument('-r', '--ROOT_DIR', type=str, default="C:\\Users\\owner\\PycharmProjects\\Counting_in_Agri\\Data", help='path to data root folder')
-    parser.add_argument('-d', '--data', type=str, default='Pears', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='WheatEars', help='choose a dataset')
     args = parser.parse_args()
     return args
 
 
 def main(args):
     # set up paths
-    path_to_coco = os.path.join(args.ROOT_DIR, args.data, 'coco')
+    path_to_coco = os.path.join(args.ROOT_DIR, args.data, 'Detection', 'coco')
     if not os.path.isdir(path_to_coco):
         print(f'no coco annotation found for dataset {args.data}')
         sys.exit(0)
-    path_to_yolo = os.path.join(args.ROOT_DIR, args.data, 'yolo')
+    path_to_yolo = os.path.join(args.ROOT_DIR, args.data, 'Detection', 'yolo')
     path_to_yolo_images = os.path.join(path_to_yolo, 'images')
     path_to_yolo_labels = os.path.join(path_to_yolo, 'labels')
     os.makedirs(path_to_yolo_images, exist_ok=True)

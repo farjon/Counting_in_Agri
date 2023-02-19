@@ -9,15 +9,15 @@ def create_cfg(args):
     cfg.DATASETS.TEST = ('val',)
     cfg.DATALOADER.NUM_WORKERS = 0
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(f"COCO-Detection/{model_name}")  # Let training initialize from model zoo
-    cfg.SOLVER.IMS_PER_BATCH = 1
-    cfg.SOLVER.BASE_LR = 0.001
+    cfg.SOLVER.IMS_PER_BATCH = args.batch_size
+    cfg.SOLVER.BASE_LR = args.lr
     cfg.SOLVER.WARMUP_ITERS = 50
-    cfg.SOLVER.MAX_ITER = 150 #adjust up if val mAP is still rising, adjust down if overfit
+    cfg.SOLVER.MAX_ITER = 3000 #adjust up if val mAP is still rising, adjust down if overfit
     cfg.SOLVER.STEPS = (100, 150)
     cfg.SOLVER.GAMMA = 0.05
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 64
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
     cfg.MODEL.RETINANET.NUM_CLASSES = 1
-    cfg.TEST.EVAL_PERIOD = 50
-    cfg.SOLVER.CHECKPOINT_PERIOD = 50
+    cfg.TEST.EVAL_PERIOD = args.val_interval * 10
+    cfg.SOLVER.CHECKPOINT_PERIOD = args.save_interval
     return cfg

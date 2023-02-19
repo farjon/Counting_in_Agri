@@ -76,7 +76,6 @@ class CSVGenerator_MSR_DRN(object):
                 raise_from(ValueError(f'invalid CSV annotations file: {csv_object_number_file}: {e}'), None)
 
             self.rbg_images_names = list(self.image_data_object_number.keys())
-
             # csv with img_path, x, y
             if model_type == 'DRN':
                 try:
@@ -86,8 +85,8 @@ class CSVGenerator_MSR_DRN(object):
                     raise_from(ValueError('invalid CSV annotations file: {}: {}'.format(csv_object_location_file, e)), None)
 
                 # make sure all files has center annotations
-                self.centers_images_names =[x.replace('rgb', 'centers') for x in self.rbg_images_names]
-                assert set(list(self.image_data_object_location.keys())) == set(self.centers_images_names) , 'there are some missing centers annotations'
+                self.centers_images_names = [f'{x}_centers' for x in self.rbg_images_names]
+                assert len(list(self.image_data_object_location.keys())) == len(self.centers_images_names) , 'there are some missing centers annotations'
         else:
             rbg_images_names = os.listdir(self.base_dir)
             rbg_images_names_a =[]
@@ -173,10 +172,21 @@ class CSVGenerator_MSR_DRN(object):
         return len(self.rbg_images_names)
 
     def image_path_rgb(self, image_index):
-        return os.path.join(self.base_dir, self.rbg_images_names[image_index])
+        return self.find_image_path(self.rbg_images_names[image_index], 'RGB')
+
 
     def image_path_centers(self, image_index):
-        return os.path.join(self.base_dir, self.centers_images_names[image_index])
+        return self.find_image_path(self.centers_images_names[image_index], 'centers')
+
+
+    def find_image_path(self, image_name, dir_name):
+        if '.' in os.path.splitext(image_name)[-1]:
+            return os.path.join(self.base_dir, image_name)
+        else:
+            try_format = ['jpg', 'png', 'jpeg', 'JPG', 'PNG', 'JPEG']
+            for f in try_format:
+                if os.path.exists(os.path.join(self.base_dir, dir_name, image_name + '.' + f)):
+                    return os.path.join(self.base_dir, dir_name, image_name + '.' + f)
 
     def image_aspect_ratio(self, image_index):
         # PIL is fast for metadata
@@ -207,7 +217,7 @@ class CSVGenerator_MSR_DRN(object):
         return [self.load_annotations_num_of_objects(image_index) for image_index in group]
 
     def load_annotations_objects_centers(self, image_index):
-        path   = self.centers_images_names[image_index]
+        path   = self.rbg_images_names[image_index]
         annots = self.image_data_object_location[path]
         centers  = np.zeros((len(annots), 3))
 

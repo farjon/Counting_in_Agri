@@ -46,9 +46,9 @@ def train_efficientDet(args):
 def train_yolov5(args):
     from counters.Detection_based.utils.create_detector_args import create_yolov5_train_args
     # configuration files
-    data_yaml_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_Regression', 'yolo_data_yaml',
+    data_yaml_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_based', 'yolo_data_yaml',
                                   args.data + '.yaml')
-    cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_Regression', 'config',
+    cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_based', 'config',
                             args.detector + '_' + args.data + '_cfg.yaml')
     detector_version = args.detector.split('_')[0] + args.detector.split('_')[1]
     path_to_pretrained_model = os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained', 'yolo',
