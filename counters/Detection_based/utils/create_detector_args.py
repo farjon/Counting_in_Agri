@@ -33,7 +33,7 @@ def create_yolov5_train_args(args, cfg_path, data_yaml_path, path_to_pretrained_
     yolo_det_args.data = data_yaml_path
     yolo_det_args.cfg = cfg_path
     yolo_det_args.weights = path_to_pretrained_model
-    yolo_det_args.name = args.detector + '_' + args.data + '_results'
+    yolo_det_args.name = args.detector + '_' + args.data + '_results_exp_' + str(args.exp_number)
     yolo_det_args.project = args.save_trained_models
     yolo_det_args.device = 0
 
@@ -47,31 +47,15 @@ def create_yolov5_train_args(args, cfg_path, data_yaml_path, path_to_pretrained_
 
     return yolo_det_args
 
-def create_yolov5_infer_args(args, yolo_det_args):
-    yolo_infer_args = argparse.ArgumentParser()
-    yolo_infer_args = yolo_infer_args.parse_args()
-    yolo_infer_args.project = os.path.join(args.ROOT_DIR, 'Results', 'detect', 'yolo')
-    yolo_infer_args.name = 'exp'
-    yolo_infer_args.weights = os.path.join(args.save_trained_models, yolo_det_args.name, 'weights', 'best.pt')
-    yolo_infer_args.source = os.path.join(args.data_path, 'test')
-    yolo_infer_args.conf_thres = 0.25
-    yolo_infer_args.iou_thres = 0.45  # NMS iou threshold
-    yolo_infer_args.imgsz = [640]
-    yolo_infer_args.max_det = 1000
-    yolo_infer_args.view_img = False
-    yolo_infer_args.save_txt = True
-    yolo_infer_args.save_conf = True
-    yolo_infer_args.save_crop = True
+def create_yolov5_infer_args(args):
+    from yolov5.detect import parse_opt as yolo_parse_args
+    yolo_infer_args = yolo_parse_args()
+    yolo_infer_args.project = args.save_counting_results
+    yolo_infer_args.name = args.detector + '_' + args.data + '_results_exp_' + str(args.exp_number)
+    yolo_infer_args.weights = os.path.join(args.save_trained_models, yolo_infer_args.name, 'weights', 'best.pt')
+    yolo_infer_args.source = os.path.join(args.data_path, 'images', args.test_set)
+    yolo_infer_args.conf_thres = args.det_test_thresh
+    yolo_infer_args.iou_thres = args.iou_threshold  # NMS iou threshold
     yolo_infer_args.nosave = True
-    yolo_infer_args.exist_ok = True
-    yolo_infer_args.classes = None
-    yolo_infer_args.agnostic_nms = True
-    yolo_infer_args.augment = True
-    yolo_infer_args.visualize = True
-    yolo_infer_args.update = True
-    yolo_infer_args.line_thickness = 3
-    yolo_infer_args.hide_conf = False
-    yolo_infer_args.hide_labels = False
-    yolo_infer_args.half = False
-    yolo_infer_args.imgsz *= 2 if len(yolo_infer_args.imgsz) == 1 else 1  # expand
+    yolo_infer_args.save_txt = True
     return yolo_infer_args
