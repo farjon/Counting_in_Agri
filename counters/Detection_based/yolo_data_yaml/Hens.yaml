@@ -8,11 +8,11 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: ../Data/Detection/Melons  # dataset root dir
-train: train2017.txt  # train images (relative to 'path') 118287 images
-val: val2017.txt  # train images (relative to 'path') 5000 images
-test: test-dev2017.txt  # 20288 of 40670 images, submit to https://competitions.codalab.org/competitions/20794
+path: C:/Users/owner/PycharmProjects/Counting_in_Agri/Data/Hens/Detection/yolo/images  # dataset root dir
+train: train  # train images (relative to 'path')
+val: val     # val images (relative to 'path')
+test: test
 
 # Classes
 nc: 1  # number of classes
-names: ['Melon']  # class names
+names: ['AppleFlower']  # class names

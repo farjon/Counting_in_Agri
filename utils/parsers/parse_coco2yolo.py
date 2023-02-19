@@ -29,7 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Annotations parser from COCO to YOLOs')
     # --------------------------- Data Arguments ---------------------------
     parser.add_argument('-r', '--ROOT_DIR', type=str, default="C:\\Users\\owner\\PycharmProjects\\Counting_in_Agri\\Data", help='path to data root folder')
-    parser.add_argument('-d', '--data', type=str, default='WheatEars', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='BananaBunch', help='choose a dataset')
     args = parser.parse_args()
     return args
 

@@ -8,12 +8,12 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='BananaBunch', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
-    parser.add_argument('-det', '--detector', type=str, default='RetinaNet', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
+    parser.add_argument('-det', '--detector', type=str, default='yolov5_s', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient'
                                 'in case you choose yolov5, please add "_i" where i is the model size')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
