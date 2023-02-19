@@ -4,8 +4,6 @@
 **/yolov5/
 **/EfficientDet_Pytorch/
 **/detectron2_windows/
-**/pytorch_retinanet/
-**/tasselnetv2plus/
 **/Data/
 **/Results/
 **/notebooks/
@@ -14,6 +12,7 @@
 **__pycache__/
 **/wandb/
 **/coco_eval/
+**/SandBox/
 **/MSR_DRN_keras/for_submission/*
 **/MSR_DRN_keras/experimentations/*
 0.8.1'
