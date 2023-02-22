@@ -2,27 +2,25 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
-def test_models(args, test_dataset, loss_func, models):
+def test_model(args, test_dataset, model):
     device = args.device
-    models_scores = []
-    for model in models:
-        model.to(device)
-        model.eval()
-        test_loss = []
-        test_loop = tqdm(enumerate(test_dataset), total=len(test_dataset), leave=False)
-        for test_batch_idx, (inputs, labels) in test_loop:
-            with torch.no_grad():
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                loss = loss_func(outputs, labels)
-                test_loss.append(loss.item())
+    model_counting_results = {
+        'image_name': [],
+        'gt_count': [],
+        'pred_count': []
+    }
 
-        mean_test_loss = np.mean(test_loss)
+    model.to(device)
+    model.eval()
+    test_loop = tqdm(enumerate(test_dataset), total=len(test_dataset), leave=False)
+    for test_batch_idx, (inputs, labels, img_details) in test_loop:
+        with torch.no_grad():
+            inputs = inputs.to(device)
+            outputs = model(inputs)
 
-        print('Test. model - {}. loss: {:1.5f}.'.format(
-                model, mean_test_loss))
-        models_scores.append(mean_test_loss)
-    print(f'final_MSE: {models_scores[0]}')
-    print(f'best_MSE: {models_scores[1]}')
+            model_counting_results['image_name'].extend(img_details)
+            model_counting_results['gt_count'].extend(labels.numpy().tolist())
+            model_counting_results['pred_count'].extend(outputs.detach().cpu().numpy().tolist())
 
-    return models_scores
+
+    return model_counting_results

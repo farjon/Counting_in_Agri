@@ -2,7 +2,7 @@ import os
 import json
 import glob
 import torch
-shutil
+import shutil
 def test_detectron2(args):
     # Run inference over the test set towards the regression phase
     from counters.Detection_based.config.adjust_detectron_cfg import create_cfg
@@ -16,10 +16,10 @@ def test_detectron2(args):
     if args.save_predictions:
         os.makedirs(os.path.join(cfg.OUTPUT_DIR, 'prediction_results'), exist_ok=True)
     cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
-    cfg.DATASETS.TEST = ("test",)
+    cfg.DATASETS.TEST = (args.test_set,)
     predictor = DefaultPredictor(cfg)
     cfg.MODEL.RETINANET.SCORE_THRESH_TEST = args.det_test_thresh
-    with open(f'{args.data_path}/test/instances_test.json', 'rt', encoding='UTF-8') as annotations:
+    with open(f'{args.data_path}/{args.test_set}/instances_{args.test_set}.json', 'rt', encoding='UTF-8') as annotations:
         coco = json.load(annotations)
 
 
@@ -46,7 +46,7 @@ def test_detectron2(args):
         images_counting_results['gt_count'].append(len(gt_bboxes))
         images_detection_results['gt_bboxes'].append(gt_bboxes)
 
-        im = cv2.imread(os.path.join(args.data_path, 'test', image_name))
+        im = cv2.imread(os.path.join(args.data_path, args.test_set, image_name))
         predictions = predictor(im)
         
         predictions = predictions['instances'].to('cpu')
@@ -69,7 +69,7 @@ def test_efficientDet(args, eff_det_args, best_epoch):
     from EfficientDet_Pytorch.efficientdet.utils import BBoxTransform, ClipBoxes
     from EfficientDet_Pytorch.utils.utils import preprocess, invert_affine, postprocess
 
-    model_path = os.path.join(args.save_trained_models, args.data, f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
+    model_path = os.path.join(eff_det_args.saved_path, f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
 
     params = Params(f'{eff_det_args.project}.yml')
 
@@ -186,4 +186,4 @@ def test_yolov5(args):
         images_detection_results['pred_bboxes'].append(collected_predictions)
         images_counting_results['pred_count'].append(len(predictions))
 
-    return images_counting_results, images_detection_results
+    return images_counting_results, images_detection_results, yolo_infer_args

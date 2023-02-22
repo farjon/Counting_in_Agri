@@ -18,7 +18,8 @@ class Reg_Agri_Dataset_csv(Dataset):
         # load the annotations from the .csv file
         annotations = pd.read_csv(anno_file)
         dir_list = os.listdir(os.path.join(self.datapath, self.set_name))
-        dir_list.remove(f'{self.set_name}.csv')
+        if f'{self.set_name}.csv' in dir_list:
+            dir_list.remove(f'{self.set_name}.csv')
         dir_list_no_ext = [os.path.splitext(x)[0] for x in dir_list]
 
         for i, row in annotations.iterrows():
@@ -40,5 +41,6 @@ class Reg_Agri_Dataset_csv(Dataset):
         img = Image.open(os.path.join(self.datapath, self.set_name, img_details.iloc[0]))
         img = self.transform(img)
         annot = torch.tensor(img_details.iloc[1], dtype=torch.float32)
-
+        if self.set_name == 'test':
+            return img, annot, img_details.iloc[0]
         return img, annot

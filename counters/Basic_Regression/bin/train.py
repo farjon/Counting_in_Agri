@@ -3,15 +3,16 @@ import numpy as np
 import torch
 import argparse
 from counters.Basic_Regression.bin.train_loop import train_and_eval
-from counters.Basic_Regression.bin.test_loop import test_models
+from counters.Basic_Regression.bin.test_loop import test_model
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import json
+import pandas as pd
+from counters.results_graphs import counting_results
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Banana', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='WheatSpikelets', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=10, help='padding size in case of splitting')
@@ -86,9 +87,8 @@ def main(args):
     # setting up path to save pretrained models
     args.save_downloaded_weights = os.path.join(args.ROOT_DIR, 'Trained_Models', 'pretrained')
     torch.hub.set_dir(args.save_downloaded_weights)
-    args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, 'Basic_Regression', str(args.exp_number))
-    args.save_results_path = os.path.join(args.ROOT_DIR, 'Results', args.data, 'Basic_Regression', str(args.exp_number))
-
+    args.save_checkpoint_path = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data, 'Basic_Regression', f'{args.model_type}_{str(args.exp_number)}')
+    args.save_results_path = os.path.join(args.ROOT_DIR, 'Results', args.data, 'Basic_Regression',  f'{args.model_type}_{str(args.exp_number)}')
     os.makedirs(args.save_checkpoint_path, exist_ok=True)
     os.makedirs(args.save_results_path, exist_ok=True)
     # Create data loaders
@@ -133,11 +133,22 @@ def main(args):
     final_model.load_state_dict(torch.load(final_model_path))
 
     # Test Models
-    models_scores = test_models(args, test_dataset, loss_func, models = [final_model, best_model])
+    best_model_counting_results = test_model(args, test_dataset, best_model)
 
     # Report results
-    with open(os.path.join(args.save_results_path, 'models_scores.json'), 'w') as f:
-        json.dump(models_scores, f, indent=4)
+    mse_dict, mse = counting_results.report_mse(best_model_counting_results['image_name'], best_model_counting_results['gt_count'], best_model_counting_results['pred_count'])
+    mae_dict, mae = counting_results.report_mae(best_model_counting_results['image_name'], best_model_counting_results['gt_count'], best_model_counting_results['pred_count'])
+    agreement_dict, agreement = counting_results.report_agreement(best_model_counting_results['image_name'], best_model_counting_results['gt_count'], best_model_counting_results['pred_count'])
+    mrd_dict, mrd = counting_results.report_mrd(best_model_counting_results['image_name'], best_model_counting_results['gt_count'], best_model_counting_results['pred_count'])
+    r_squared = counting_results.report_r_squared(best_model_counting_results['image_name'], best_model_counting_results['gt_count'], best_model_counting_results['pred_count'])
+
+    # save results to csv
+    results_df = pd.DataFrame({'image_name': best_model_counting_results['image_name'], 'gt_count': best_model_counting_results['gt_count'], 'pred_count': best_model_counting_results['pred_count']})
+    results_df.to_csv(os.path.join(args.save_results_path, 'complete_results.csv'), index=False)
+
+    metric_results_df = pd.DataFrame({'mse': mse, 'mae': mae, 'agreement': agreement, 'mrd': mrd, 'r_squared': r_squared}, index=[0])
+    metric_results_df.to_csv(os.path.join(args.save_results_path, 'metric_results.csv'), index=False)
+
 
 if __name__ =='__main__':
     args = parse_args()

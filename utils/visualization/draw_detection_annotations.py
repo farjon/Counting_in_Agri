@@ -18,14 +18,14 @@ def drawrect(drawcontext, box, outline=None, width=0):
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Grapes', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='BananaBunch', help='choose a dataset')
     parser.add_argument('-o', '--output_path', type=str, default='', help='path to save images, defualt is NONE')
     args = parser.parse_args()
     return args
 
 def main(args):
-    args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'coco')
-    args.output_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'images_with_annotations')
+    args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', 'coco')
+    args.output_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', 'images_with_annotations')
     os.makedirs(args.output_path, exist_ok=True)
     sets_to_vis = ['train', 'val', 'test']
 

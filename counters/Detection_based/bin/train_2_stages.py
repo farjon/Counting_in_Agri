@@ -9,12 +9,12 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Hens', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='Melons_split', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
-    parser.add_argument('-det', '--detector', type=str, default='yolov5_s', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
+    parser.add_argument('-det', '--detector', type=str, default='efficientDet_2', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient'
                                 'in case you choose yolov5, please add "_i" where i is the model size')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
@@ -79,7 +79,8 @@ def main(args):
         # register_coco_instances : name, metadata, json_file, image_root
         register_coco_instances("train", {}, f'{args.data_path}/train/instances_train.json', f'{args.data_path}/train/')
         register_coco_instances("val", {}, f'{args.data_path}/val/instances_val.json', f'{args.data_path}/val/')
-        register_coco_instances("test", {}, f'{args.data_path}/test/instances_test.json', f'{args.data_path}/test/')
+        if args.test_set == 'test':
+            register_coco_instances("test", {}, f'{args.data_path}/test/instances_test.json', f'{args.data_path}/test/')
 
     # --------------------------- Start edit ---------------------------
     # setting up path to save trained models
@@ -98,8 +99,10 @@ def main(args):
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
         from counters.Detection_based.bin.train_detectors import train_detectron2
         from counters.Detection_based.bin.test_detectors import test_detectron2
-        # train_detectron2(args)
+        train_detectron2(args)
         images_counting_results, images_detection_results = test_detectron2(args)
+        counting_save_results = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}')
+        os.makedirs(counting_save_results, exist_ok=True)
 
     elif args.detector.split('_')[0] == 'efficientDet':
         from counters.Detection_based.bin.train_detectors import train_efficientDet
@@ -110,8 +113,9 @@ def main(args):
     elif args.detector.split('_')[0] == 'yolov5':
         from counters.Detection_based.bin.train_detectors import train_yolov5
         from counters.Detection_based.bin.test_detectors import test_yolov5
-        train_yolov5(args)
-        images_counting_results, images_detection_results = test_yolov5(args)
+        # train_yolov5(args)
+        images_counting_results, images_detection_results, yolo_infer_args = test_yolov5(args)
+        counting_save_results = os.path.join(yolo_infer_args.project, yolo_infer_args.name)
 
     # Report results
     mse_dict, mse = counting_results.report_mse(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
@@ -122,10 +126,10 @@ def main(args):
 
     # save results to csv
     results_df = pd.DataFrame({'image_name': images_counting_results['image_name'], 'gt_count': images_counting_results['gt_count'], 'pred_count': images_counting_results['pred_count']})
-    results_df.to_csv(os.path.join(args.save_counting_results, 'complete_results.csv'), index=False)
+    results_df.to_csv(os.path.join(counting_save_results, 'complete_results.csv'), index=False)
 
     metric_results_df = pd.DataFrame({'mse': mse, 'mae': mae, 'agreement': agreement, 'mrd': mrd, 'r_squared': r_squared}, index=[0])
-    metric_results_df.to_csv(os.path.join(args.save_counting_results, 'metric_results.csv'), index=False)
+    metric_results_df.to_csv(os.path.join(counting_save_results, 'metric_results.csv'), index=False)
 
 if __name__ =='__main__':
     args = parse_args()

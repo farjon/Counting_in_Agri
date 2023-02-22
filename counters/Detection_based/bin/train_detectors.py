@@ -9,6 +9,9 @@ def train_detectron2(args):
     from counters.Detection_based.config.adjust_detectron_cfg import create_cfg
 
     cfg = create_cfg(args)
+    cfg.OUTPUT_DIR = os.path.join(args.save_trained_models, args.detector + '_' + str(args.exp_number))
+    if os.path.exists(cfg.OUTPUT_DIR):
+        raise ValueError('Output directory already exists, please change the experiment number')
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
     class CocoTrainer(DefaultTrainer):
@@ -18,9 +21,6 @@ def train_detectron2(args):
                 os.makedirs("coco_eval", exist_ok=True)
                 output_folder = "coco_eval"
             return COCOEvaluator(dataset_name, cfg, False, output_folder, use_fast_impl=False)
-
-    cfg.OUTPUT_DIR = os.path.join(args.save_trained_models, args.detector + '_' + str(args.exp_number))
-    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 
     trainer = CocoTrainer(cfg)
     trainer.resume_or_load(resume=False)
@@ -39,6 +39,7 @@ def train_efficientDet(args):
     # model will be stored at eff_det_args.save_path
     # under the name 'args.data/'efficientdet-d{opt.compound_coef}_{best_epoch}.pth''
     best_epoch = eff_train(eff_det_args)
+    print(f'Training finished, best epoch: {best_epoch}')
     return best_epoch, eff_det_args
 
 
@@ -55,6 +56,8 @@ def train_yolov5(args):
                                             detector_version + '.pt')
 
     yolo_det_args = create_yolov5_train_args(args, cfg_path, data_yaml_path, path_to_pretrained_model)
+    if os.path.exists(os.path.join(yolo_det_args.project, yolo_det_args.name)):
+        raise ValueError('Output directory already exists, please change the experiment number')
 
     from yolov5.train import main as yolo_train
     yolo_train(yolo_det_args)
