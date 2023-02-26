@@ -38,7 +38,8 @@ def train_efficientDet(args):
 
     # model will be stored at eff_det_args.save_path
     # under the name 'args.data/'efficientdet-d{opt.compound_coef}_{best_epoch}.pth''
-    best_epoch = eff_train(eff_det_args)
+    # best_epoch = eff_train(eff_det_args)
+    best_epoch = 48
     print(f'Training finished, best epoch: {best_epoch}')
     return best_epoch, eff_det_args
 

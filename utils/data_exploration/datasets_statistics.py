@@ -148,5 +148,5 @@ def main(args):
 
 if __name__ == '__main__':
     args = parse_args()
-    args.ROOT_DIR = os.path.join('C:\\Users\\owner\\PycharmProjects\\Counting_in_Agri\\Data', args.data)
+    args.ROOT_DIR = os.path.join('/Data', args.data)
     main(args)

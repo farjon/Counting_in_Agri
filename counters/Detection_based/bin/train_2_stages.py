@@ -9,12 +9,12 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='Melons_split', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='CherryTomato', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=7, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=100, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
-    parser.add_argument('-det', '--detector', type=str, default='efficientDet_2', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
+    parser.add_argument('-det', '--detector', type=str, default='yolov5_s', help='choose a detector efficientDet_i / yolov5_i / fasterRCNN / RetinaNet'
                                'in case you choose efficientDet, please add "_i" where i is the compound coefficient'
                                 'in case you choose yolov5, please add "_i" where i is the model size')
     parser.add_argument('-b', '--batch_size', type=int, default=1, help='batch size for training')
@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument('--es_patience', type=int, default=0,
                         help='Early stopping\'s parameter: number of epochs with no improvement after which training will be stopped. Set to 0 to disable this technique.')
     parser.add_argument('--save_predictions', action='store_true', help='either to save or not, the predicted results of the detection')
+    parser.add_argument('--visualize', action='store_true', default=True, help='either to visualize or not, the predicted results of the detection')
     args = parser.parse_args()
     return args
 
@@ -61,11 +62,13 @@ def main(args):
     else:
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', labels_format)
 
-    # what is the test set?
-    # in case no test set exists, use validation set
-    args.test_set = 'test' if os.path.exists(os.path.join(args.data_path, 'test')) else 'val'
+
 
     if args.detector == 'fasterRCNN' or args.detector == 'RetinaNet':
+        # what is the test set?
+        # in case no test set exists, use validation set
+        args.test_set = 'test' if os.path.exists(os.path.join(args.data_path, 'test')) else 'val'
+
         if args.detector == 'fasterRCNN':
             args.det_model = 'faster_rcnn_X_101_32x8d_FPN_3x.yaml'
         else:
@@ -82,6 +85,8 @@ def main(args):
         if args.test_set == 'test':
             register_coco_instances("test", {}, f'{args.data_path}/test/instances_test.json', f'{args.data_path}/test/')
 
+    elif args.detector.split('_')[0] == 'yolov5':
+        args.test_set = 'test' if os.path.exists(os.path.join(args.data_path, 'images', 'test')) else 'val'
     # --------------------------- Start edit ---------------------------
     # setting up path to save trained models
     args.save_trained_models = os.path.join(args.ROOT_DIR, 'Trained_Models', args.data)
@@ -102,21 +107,23 @@ def main(args):
         train_detectron2(args)
         images_counting_results, images_detection_results = test_detectron2(args)
         counting_save_results = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}')
-        os.makedirs(counting_save_results, exist_ok=True)
+
 
     elif args.detector.split('_')[0] == 'efficientDet':
         from counters.Detection_based.bin.train_detectors import train_efficientDet
         from counters.Detection_based.bin.test_detectors import test_efficientDet
         best_epoch, eff_det_args = train_efficientDet(args)
         images_counting_results, images_detection_results = test_efficientDet(args, eff_det_args, best_epoch)
+        counting_save_results = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}')
 
     elif args.detector.split('_')[0] == 'yolov5':
         from counters.Detection_based.bin.train_detectors import train_yolov5
         from counters.Detection_based.bin.test_detectors import test_yolov5
-        # train_yolov5(args)
+        train_yolov5(args)
         images_counting_results, images_detection_results, yolo_infer_args = test_yolov5(args)
         counting_save_results = os.path.join(yolo_infer_args.project, yolo_infer_args.name)
 
+    os.makedirs(counting_save_results, exist_ok=True)
     # Report results
     mse_dict, mse = counting_results.report_mse(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])
     mae_dict, mae = counting_results.report_mae(images_counting_results['image_name'], images_counting_results['gt_count'], images_counting_results['pred_count'])

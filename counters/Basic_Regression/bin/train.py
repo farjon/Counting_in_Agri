@@ -12,14 +12,14 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='WheatSpikelets', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='CherryTomato', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=10, help='padding size in case of splitting')
     # --------------------------- Training Arguments -----------------------
     parser.add_argument('-m', '--model_type', type=str, default='resnet50', help='choose a deep model')
     parser.add_argument('-b', '--batch_size', type=int, default=10, help='batch size for training')
-    parser.add_argument('-e', '--epochs', type=int, default=100, help='number of epochs for training')
+    parser.add_argument('-e', '--epochs', type=int, default=50, help='number of epochs for training')
     parser.add_argument('-exp', '--exp_number', type=int, default=0, help='number of current experiment')
     parser.add_argument('-c', '--criteria', type=str, default='mse', help='criteria can be mse / mae')
     parser.add_argument('-lr', '--lr', type=float, default=1e-3, help='set learning rate')

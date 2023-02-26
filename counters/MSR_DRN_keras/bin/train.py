@@ -34,8 +34,8 @@ def model_with_weights(model, weights, skip_mismatch):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_name', type=str, default='Banana')
+    parser.add_argument('--model_type', type=str, default='MSR_P3_L2', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
+    parser.add_argument('--dataset_name', type=str, default='A1')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--lr', type=float, default=1e-5)
@@ -279,6 +279,8 @@ if __name__ == '__main__':
     # if args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
     #     args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'training', args.dataset_name)
     args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.dataset_name, 'MSR_DRN')
+    if args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'MSR_DRN', args.dataset_name)
     # model variant
     if not args.model_type in ['DRN', 'MSR_P3_P7_Gauss_MLE', 'MSR_P3_L2']:
         raise('model type unknown, should be either MSR or DRN')

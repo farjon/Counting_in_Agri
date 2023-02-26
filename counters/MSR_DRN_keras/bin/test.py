@@ -35,9 +35,9 @@ def create_generator(args):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
+    parser = argparse.ArgumentParser(description='Test MSR or DRN network.')
     parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_name', type=str, default='Banana', help = 'can be either Grapes / WheatSpikelets / BananaLeaves / Banana / A1 / A2 / A3 / A4 / Ac / A1A2A3A4')
+    parser.add_argument('--dataset_name', type=str, default='Grapes', help = 'can be either Grapes / WheatSpikelets / BananaLeaves / Banana / A1 / A2 / A3 / A4 / Ac / A1A2A3A4')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--exp_num', type=int, default=0, help = 'if exp_num already exists, num will be increased automaically')
     return parser.parse_args()
@@ -76,7 +76,8 @@ def main(args=None):
         args.model_type,
         generator,
         prediction_model,
-        save_path=args.save_path
+        save_path=args.save_path,
+        save_results=True
         )
     print("CountDiff:", CountDiff, "AbsCountDiff" ,AbsCountDiff, "CountAgreement", CountAgreement, "MSE", MSE)
 

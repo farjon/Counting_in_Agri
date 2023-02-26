@@ -1,8 +1,10 @@
 import os
 import json
-import glob
+import cv2
 import torch
 import shutil
+import numpy as np
+from utils.visualization import drawing_detections
 def test_detectron2(args):
     # Run inference over the test set towards the regression phase
     from counters.Detection_based.config.adjust_detectron_cfg import create_cfg
@@ -12,6 +14,11 @@ def test_detectron2(args):
     cfg = create_cfg(args)
     cfg.OUTPUT_DIR = os.path.join(args.save_trained_models, args.detector + '_' + str(args.exp_number))
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+
+
+    if args.visualize:
+        path_to_save_visualization = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}', 'visualize')
+        os.makedirs(path_to_save_visualization, exist_ok=True)
 
     if args.save_predictions:
         os.makedirs(os.path.join(cfg.OUTPUT_DIR, 'prediction_results'), exist_ok=True)
@@ -56,9 +63,17 @@ def test_detectron2(args):
         images_counting_results['pred_count'].append(len(predictions.get('scores')))
         images_detection_results['pred_bboxes'].append(predictions.get('pred_boxes'))
 
-        # Save the images with the infered bounding boxes
-        # if args.save_predictions:
-        #     cv2.imwrite(os.path.join(cfg.OUTPUT_DIR, 'prediction_results', image_name), predictions.get_image()[:, :, ::-1])
+        if args.visualize:
+            detections = predictions.get('pred_boxes').tensor.numpy()
+            detections = detections.astype(int)
+            # convert xyxy to xywh
+            detections[:, 2] = detections[:, 2] - detections[:, 0]
+            detections[:, 3] = detections[:, 3] - detections[:, 1]
+            img_to_draw = cv2.imread(os.path.join(args.data_path, 'test', image_name))
+            img = drawing_detections.draw_detections_and_annotations(img_to_draw, gt_bboxes,
+                                                                     detections,
+                                                                     args.data)
+            cv2.imwrite(os.path.join(path_to_save_visualization, image_name), img)
 
     return images_counting_results, images_detection_results
 
@@ -68,8 +83,12 @@ def test_efficientDet(args, eff_det_args, best_epoch):
     from EfficientDet_Pytorch.backbone import EfficientDetBackbone
     from EfficientDet_Pytorch.efficientdet.utils import BBoxTransform, ClipBoxes
     from EfficientDet_Pytorch.utils.utils import preprocess, invert_affine, postprocess
+    model_dir = f'{args.detector.split("_")[0]}_{args.data}'
+    model_path = os.path.join(eff_det_args.saved_path, model_dir,  f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
 
-    model_path = os.path.join(eff_det_args.saved_path, f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
+    if args.visualize:
+        path_to_save_visualization = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}', 'visualize')
+        os.makedirs(path_to_save_visualization, exist_ok=True)
 
     params = Params(f'{eff_det_args.project}.yml')
 
@@ -101,9 +120,9 @@ def test_efficientDet(args, eff_det_args, best_epoch):
         'pred_bboxes': []
     }
 
-    outputs = []
     with torch.no_grad():
         for image in coco['images']:
+            print(f'Processing image {image["id"]}/{len(coco["images"])}')
             image_id = image['id']
             image_name = image['file_name']
             images_counting_results['image_name'].append(image_name)
@@ -131,18 +150,24 @@ def test_efficientDet(args, eff_det_args, best_epoch):
             images_counting_results['pred_count'].append(len(predictions['rois']))
             images_detection_results['pred_bboxes'].append(predictions['rois'])
 
-            # TODO - add the option to visualize results
+            if args.visualize:
+                img_to_draw = cv2.imread(os.path.join(args.data_path, 'test', image_name))
+                img = drawing_detections.draw_detections_and_annotations(img_to_draw, gt_bboxes, predictions['rois'], args.data)
+                cv2.imwrite(os.path.join(path_to_save_visualization, image_name), img)
         return images_counting_results, images_detection_results
 
 def test_yolov5(args):
     from yolov5.detect import run as yolov5_detect
     from counters.Detection_based.utils.create_detector_args import create_yolov5_infer_args
     yolo_infer_args = create_yolov5_infer_args(args)
-    os.makedirs(yolo_infer_args.project, exist_ok=True)
-    # TODO - detect.run does not return anything, create a wrapper
-    if os.path.exists(os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels')):
-        shutil.rmtree(os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels'))
+
+    if os.path.exists(os.path.join(yolo_infer_args.project, yolo_infer_args.name)):
+        shutil.rmtree(os.path.join(yolo_infer_args.project, yolo_infer_args.name))
     yolov5_detect(**vars(yolo_infer_args))
+
+    if args.visualize:
+        path_to_save_visualization = os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'visualize')
+        os.makedirs(path_to_save_visualization, exist_ok=True)
 
     images_counting_results = {
         'image_name': [],
@@ -157,25 +182,27 @@ def test_yolov5(args):
     }
     labels_dir = os.path.join(args.data_path, 'labels', args.test_set)
     predictions_dir = os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels')
-    for image_name in os.listdir(predictions_dir):
+    for image_res_name in os.listdir(labels_dir):
+        image_name = image_res_name.replace('.txt', '.jpg')
         # collect image names for both counting and detection
-        images_counting_results['image_name'].append(image_name)
-        images_detection_results['image_name'].append(image_name)
+        images_counting_results['image_name'].append(image_res_name)
+        images_detection_results['image_name'].append(image_res_name)
 
         # read annotation text file
-        with open(os.path.join(labels_dir, image_name), 'rt') as f:
+        with open(os.path.join(labels_dir, image_res_name), 'rt') as f:
             annotations = f.readlines()
         collected_annotations = []
         for ann in annotations:
             ann = ann.split(' ')
             ann = [float(a) for a in ann]
             ann[0] = int(ann[0])
-            collected_annotations.append(ann)
+            to_collect = {'bbox': ann[1:5], 'category_id': ann[0]}
+            collected_annotations.append(to_collect)
         images_detection_results['gt_bboxes'].append(collected_annotations)
         images_counting_results['gt_count'].append(len(annotations))
 
         # read prediction text file
-        with open(os.path.join(predictions_dir, image_name), 'rt') as f:
+        with open(os.path.join(predictions_dir, image_res_name), 'rt') as f:
             predictions = f.readlines()
         collected_predictions = []
         for pred in predictions:
@@ -186,4 +213,14 @@ def test_yolov5(args):
         images_detection_results['pred_bboxes'].append(collected_predictions)
         images_counting_results['pred_count'].append(len(predictions))
 
+        # visualize results
+        if args.visualize:
+            from utils.parsers.parse_yolo2coco import yolo_label_to_coco_style
+            img_to_draw = cv2.imread(os.path.join(args.data_path, 'images', 'test', image_name))
+            annotations_to_draw = []
+            for a in collected_annotations:
+                annotations_to_draw.append({'bbox': yolo_label_to_coco_style(a['bbox'], img_to_draw.shape[1], img_to_draw.shape[0])})
+            predictions_to_draw = [yolo_label_to_coco_style(p[1:], img_to_draw.shape[1], img_to_draw.shape[0]) for p in collected_predictions]
+            img = drawing_detections.draw_detections_and_annotations(img_to_draw, annotations_to_draw, np.array(predictions_to_draw), args.data)
+            cv2.imwrite(os.path.join(path_to_save_visualization, image_name), img)
     return images_counting_results, images_detection_results, yolo_infer_args

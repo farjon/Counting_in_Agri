@@ -1,18 +1,12 @@
 import os
-import json
 import cv2
 import copy
-import argparse
-from image import draw_rect_on_image, draw_dot_on_image, draw_text_on_image
-def parse_args():
-    parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
-    # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='BananaBunch', help='choose a dataset')
-    parser.add_argument('-o', '--output_path', type=str, default='', help='path to save images, defualt is NONE')
-    args = parser.parse_args()
-    return args
+import json
+import numpy as np
+from utils.visualization.image import draw_rect_on_image, draw_dot_on_image, draw_text_on_image
 
-def main(args):
+
+def draw_annotations(args):
     args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', 'coco')
     args.output_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Detection', 'images_with_annotations')
     os.makedirs(args.output_path, exist_ok=True)
@@ -35,7 +29,21 @@ def main(args):
             new_file_name = os.path.join(args.set_output_path, sample['file_name'])
             im_drawing.save(new_file_name)
 
-if __name__ == '__main__':
-    args = parse_args()
-    args.ROOT_DIR = 'C:\\Users\\owner\\PycharmProjects\\Counting_in_Agri'
-    main(args)
+
+def draw_detections_and_annotations(img, annotations, detections, class_name):
+    """
+    Draw annotations and detections on image
+    :param img: image to draw on
+    :param annotations: list of annotations
+    :param detections:  list of detections
+    :param class_name: name of classs
+    :return: image with annotations and detections - blue for annotations, red for detections
+    """
+    img = copy.deepcopy(img)
+    for anno in annotations:
+        img = draw_rect_on_image(img, anno['bbox'], color=(0,0,255), thickness=2)
+        img = draw_text_on_image(img, class_name, (50,50), color=(0,0,255), thickness=2)
+    for det in detections:
+        img = draw_rect_on_image(img, det.astype(np.int32), color=(255,0,0), thickness=2)
+        img = draw_text_on_image(img, class_name, (50,50), color=(255,0,0), thickness=2)
+    return img
