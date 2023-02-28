@@ -37,7 +37,7 @@ def create_generator(args):
 def parse_args():
     parser = argparse.ArgumentParser(description='Test MSR or DRN network.')
     parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_name', type=str, default='Grapes', help = 'can be either Grapes / WheatSpikelets / BananaLeaves / Banana / A1 / A2 / A3 / A4 / Ac / A1A2A3A4')
+    parser.add_argument('--dataset_name', type=str, default='CherryTomato', help = 'can be either Grapes / WheatSpikelets / BananaLeaves / Banana / A1 / A2 / A3 / A4 / Ac / A1A2A3A4')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--exp_num', type=int, default=0, help = 'if exp_num already exists, num will be increased automaically')
     return parser.parse_args()
@@ -109,11 +109,14 @@ if __name__ == '__main__':
         args.class_name = 'banana_leaf'
     elif args.dataset_name == 'Banana':
         args.class_name = 'banana'
+    elif args.dataset_name == 'CherryTomato':
+        args.class_name = 'cherry_tomato'
     elif args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
         args.class_name = 'leafs'
     # ---------------- END ----------------
     args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.dataset_name, 'MSR_DRN')
-
+    if args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'MSR_DRN', args.dataset_name)
     if args.model_type == 'DRN':
         # adding object locations maps
         args.val_csv_object_location_file = os.path.join(args.data_path, 'test',

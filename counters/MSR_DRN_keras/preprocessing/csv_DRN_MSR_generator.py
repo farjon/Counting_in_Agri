@@ -87,6 +87,11 @@ class CSVGenerator_MSR_DRN(object):
                 # make sure all files has center annotations
                 self.centers_images_names = [f'{x}_centers' for x in self.rbg_images_names]
                 assert len(list(self.image_data_object_location.keys())) == len(self.centers_images_names) , 'there are some missing centers annotations'
+                if 'LCC' in self.base_dir:
+                    old_names = list(self.image_data_object_location.items())
+                    for k,v in old_names:
+                        self.image_data_object_location[k.replace('_centers', '_rgb')] = v
+                        self.image_data_object_location.pop(k)
         else:
             rbg_images_names = os.listdir(self.base_dir)
             rbg_images_names_a =[]
@@ -181,7 +186,7 @@ class CSVGenerator_MSR_DRN(object):
 
     def find_image_path(self, image_name, dir_name):
         if '.' in os.path.splitext(image_name)[-1]:
-            return os.path.join(self.base_dir, image_name)
+            return os.path.join(self.base_dir, dir_name, image_name)
         else:
             try_format = ['jpg', 'png', 'jpeg', 'JPG', 'PNG', 'JPEG']
             for f in try_format:

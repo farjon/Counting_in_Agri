@@ -12,7 +12,7 @@ from counters.results_graphs import counting_results
 def parse_args():
     parser = argparse.ArgumentParser(description='Basic regression pipe using a deep neural network.')
     # --------------------------- Data Arguments ---------------------------
-    parser.add_argument('-d', '--data', type=str, default='CherryTomato', help='choose a dataset')
+    parser.add_argument('-d', '--data', type=str, default='BananaLeaves', help='choose a dataset')
     parser.add_argument('-si', '--split_images', type=bool, default=False, help='should we split the images into tiles')
     parser.add_argument('-nt', '--num_of_tiles', type=int, default=10, help='number of tiles')
     parser.add_argument('-p', '--padding', type=int, default=10, help='padding size in case of splitting')
@@ -31,11 +31,8 @@ def parse_args():
     return args
 
 def create_dataset(args, train_dataset_params, test_dataset_params):
-    if args.split_images and 'split' not in args.data:
-        from utils.tile_images.split_raw_images_anno_coco import split_to_tiles
-        print('Notice - to split the images, bbox annotations are needed')
-        split_to_tiles(args, args.num_of_tiles, args.padding)
-        args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data + '_split')
+    if args.data in ['A1', 'A2', 'A3', 'A4']:
+        args.data_path = os.path.join(args.ROOT_DIR, 'Data', 'LCC', 'Direct_Regression', args.data)
     else:
         args.data_path = os.path.join(args.ROOT_DIR, 'Data', args.data, 'Direct_Regression')
     from counters.Basic_Regression.dataset.reg_dataset import Reg_Agri_Dataset_csv as Reg_Agri_Dataset

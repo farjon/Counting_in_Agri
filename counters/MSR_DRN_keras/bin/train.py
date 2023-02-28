@@ -34,8 +34,8 @@ def model_with_weights(model, weights, skip_mismatch):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='MSR_P3_L2', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_name', type=str, default='A1')
+    parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
+    parser.add_argument('--dataset_name', type=str, default='CherryTomato')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--lr', type=float, default=1e-5)
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     #------------- DON'T EDIT -------------
     args.image_min_side = 800
     args.image_max_side = 1333
-    args.enlarge_steps_per_epoch = 5
+    args.enlarge_steps_per_epoch = 1
     args.freeze_backbone = False
     args.random_transform = True
     args.evaluation = True
@@ -269,6 +269,8 @@ if __name__ == '__main__':
         args.class_name = 'banana_leaf'
     elif args.dataset_name == 'Banana':
         args.class_name = 'banana'
+    elif args.dataset_name == 'CherryTomato':
+        args.class_name = 'cherry_tomato'
     elif args.dataset_name in ['A1', 'A2', 'A3', 'A4', 'Ac', 'A1A2A3A4']:
         args.class_name = 'leafs'
     # ---------------- END ----------------

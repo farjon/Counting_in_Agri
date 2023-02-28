@@ -41,6 +41,8 @@ def test_detectron2(args):
         'gt_bboxes': [],
         'pred_bboxes': []
     }
+    if 'split' in args.data:
+        images_detection_results['pred_scores'] = []
 
     for image in coco['images']:
         image_id = image['id']
@@ -62,7 +64,9 @@ def test_detectron2(args):
         # collect the results
         images_counting_results['pred_count'].append(len(predictions.get('scores')))
         images_detection_results['pred_bboxes'].append(predictions.get('pred_boxes'))
-
+        # towards combining the detections to the full scale image
+        if "split" in args.data:
+            images_detection_results['pred_scores'].append(predictions.get('scores'))
         if args.visualize:
             detections = predictions.get('pred_boxes').tensor.numpy()
             detections = detections.astype(int)
@@ -224,3 +228,61 @@ def test_yolov5(args):
             img = drawing_detections.draw_detections_and_annotations(img_to_draw, annotations_to_draw, np.array(predictions_to_draw), args.data)
             cv2.imwrite(os.path.join(path_to_save_visualization, image_name), img)
     return images_counting_results, images_detection_results, yolo_infer_args
+
+
+def test_combined_tiles(args, images_detection_results):
+    from utils.tile_images.combind_split_to_raw import combine_predictions_to_full_scale
+    #TODO - this function is currently not working for yolo format
+    # from utils.parsers.parse_yolo2coco import yolo_label_to_coco_style
+    original_data_name = args.data.split('_')[0]
+    original_images_dir = os.path.join(args.ROOT_DIR, 'Data', original_data_name, 'Detection', args.labels_format, args.test_set)
+
+    if args.visualize:
+        from utils.visualization.drawing_detections import draw_detections
+        path_to_save_visualization = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}', 'visualize_full_scale')
+        os.makedirs(path_to_save_visualization, exist_ok=True)
+
+    images_files = os.listdir(original_images_dir)
+    # read annotations
+    with open(f'{original_images_dir}/instances_{args.test_set}.json', 'rt', encoding='UTF-8') as annotations:
+        coco = json.load(annotations)
+
+    images_counting_results = {
+        'image_name': [],
+        'gt_count': [],
+        'pred_count': []
+    }
+
+    for img_name in images_files:
+        if not img_name.split('.')[1] in ['jpg', 'png', 'jpeg', 'JPG', 'PNG', 'JPEG']:
+            continue
+        # collect image name
+        images_counting_results['image_name'].append(img_name)
+        # collect gt count
+        image_id = [a['id'] for a in coco['images'] if a['file_name'] == img_name][0]
+        gt_bboxes = [a for a in coco['annotations'] if a['image_id'] == image_id]
+        images_counting_results['gt_count'].append(len(gt_bboxes))
+
+        image_full_path = os.path.join(original_images_dir, img_name)
+        img = cv2.imread(image_full_path)
+        img_h, img_w, _ = img.shape
+        image_predictions = {}
+        for n, p, s in zip(images_detection_results['image_name'], images_detection_results['pred_bboxes'], images_detection_results['pred_scores']):
+            if n.split('_')[0] == img_name.split('.')[0]:
+                # add tile detections
+                detections = p.tensor.numpy().astype(int)
+                # convert xyxy to xywh
+                detections[:, 2] = detections[:, 2] - detections[:, 0]
+                detections[:, 3] = detections[:, 3] - detections[:, 1]
+                image_predictions[n] = {'det': detections, 'scores': s.numpy().astype(float)}
+        combined_preds = combine_predictions_to_full_scale(img_name, image_predictions, (img_w, img_h), args.num_of_tiles)
+        from torchvision.ops import nms
+        combined_preds_nms = nms(torch.tensor(np.array(combined_preds)[:, 1:]), torch.tensor(np.array(combined_preds)[:, 0]), 0.5)
+        images_counting_results['pred_count'].append(combined_preds_nms.shape[0])
+        if args.visualize:
+            img = draw_detections(img, combined_preds, args.data)
+            cv2.imwrite(os.path.join(path_to_save_visualization, img_name), img)
+    return images_counting_results
+
+
+

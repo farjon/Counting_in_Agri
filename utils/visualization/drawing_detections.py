@@ -41,9 +41,24 @@ def draw_detections_and_annotations(img, annotations, detections, class_name):
     """
     img = copy.deepcopy(img)
     for anno in annotations:
-        img = draw_rect_on_image(img, anno['bbox'], color=(0,0,255), thickness=2)
-        img = draw_text_on_image(img, class_name, (50,50), color=(0,0,255), thickness=2)
+        img = draw_rect_on_image(img, np.array(anno['bbox']).astype(int), color=(0,255,0), thickness=2)
+        img = draw_text_on_image(img, f'{class_name}_annot', (25,25), color=(0,255,0), thickness=2)
     for det in detections:
-        img = draw_rect_on_image(img, det.astype(np.int32), color=(255,0,0), thickness=2)
-        img = draw_text_on_image(img, class_name, (50,50), color=(255,0,0), thickness=2)
+        img = draw_rect_on_image(img, det.astype(np.int32), color=(0,0,255), thickness=2)
+        img = draw_text_on_image(img, f'{class_name}_pred', (25,50), color=(0,0,255), thickness=2)
+    return img
+
+def draw_detections(img, detections, class_name):
+    """
+    Draw annotations and detections on image
+    :param img: image to draw on
+    :param annotations: list of annotations
+    :param detections:  list of detections
+    :param class_name: name of classs
+    :return: image with annotations and detections - blue for annotations, red for detections
+    """
+    img = copy.deepcopy(img)
+    for det in detections:
+        img = draw_rect_on_image(img, np.array(det[1:]).astype(np.int32), color=(0,0,255), thickness=2)
+        img = draw_text_on_image(img, f'{class_name}_pred', (25,50), color=(0,0,255), thickness=2)
     return img

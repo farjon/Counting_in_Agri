@@ -51,6 +51,9 @@ class Reg_Agri_Dataset_csv(Dataset):
         else:
             image_path = img_details.iloc[0]
         img = Image.open(os.path.join(self.datapath, self.set_name, image_path))
+        if img_details.iloc[0].split('.')[-1]:
+            # fix png - convert to rgb
+            img = img.convert("RGB")
         img = self.transform(img)
         annot = torch.tensor(img_details.iloc[1], dtype=torch.float32)
         if self.set_name == 'test':
