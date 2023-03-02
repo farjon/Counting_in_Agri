@@ -8,7 +8,7 @@ from counters.MSR_DRN_keras.utils.eval_detection import detection_evaluation, ca
 from counters.MSR_DRN_keras.utils.visualization import plot_RP_curve, visualize_images
 
 
-def collect_gt_and_preds(model_type, generator, model, save_path=None, visualize_im = False, calc_det_performance = False):
+def collect_gt_and_preds(model_type, generator, model, save_path=None, visualize_im = False, calc_det_performance = False, visualize_im_path=''):
     """ Get the detections from the model using the generator.
 
     The result is a list of lists such that the size is:
@@ -38,9 +38,9 @@ def collect_gt_and_preds(model_type, generator, model, save_path=None, visualize
         if visualize_im:
             if not generator.epoch == None:
                 if generator.epoch==0 or (generator.epoch+1) % 20 == 0 :
-                    visualize_images(gt, Image_name, save_path, generator, model, image)
+                    visualize_images(gt, Image_name, visualize_im_path, generator, model, image)
             else:
-                visualize_images(gt, Image_name, save_path, generator, model, image)
+                visualize_images(gt, Image_name, visualize_im_path, generator, model, image)
 
         # get GT
         gt = gt[0][0]
@@ -97,13 +97,14 @@ def collect_predictions(model_type, generator, model):
     return predicted_counts
 
 
-def evaluate(model_type, generator, model, save_path=None, visualize_im=False, calc_det_performance = False, save_results = False):
+def evaluate(model_type, generator, model, save_path=None, visualize_im=False, calc_det_performance = False, save_results = False, visualize_im_path=''):
     results = collect_gt_and_preds(
         model_type,
         generator,
         model,
         save_path=save_path,
         visualize_im=visualize_im,
+        visualize_im_path=visualize_im_path,
         calc_det_performance=calc_det_performance
     )
     gt_counts, pred_counts, images_names = np.array(results[0]), np.array(results[1]), results[2]

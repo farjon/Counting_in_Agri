@@ -1,29 +1,6 @@
 import os
 import argparse
 
-def create_efficientDet_args(args, cfg_path):
-    from EfficientDet_Pytorch.train import get_args
-    eff_det_args = get_args()
-    eff_det_args.project = cfg_path
-    eff_det_args.compound_coef = int(args.detector.split('_')[1])
-    eff_det_args.batch_size = args.batch_size
-    eff_det_args.lr = args.lr
-    eff_det_args.optim = args.optim
-    eff_det_args.num_epochs = args.epochs
-    eff_det_args.val_interval = args.val_interval
-    # in efficientDet, the validation interval is the number of steps (iterations)
-    eff_det_args.save_interval = args.save_interval * args.val_interval
-    eff_det_args.es_patience = args.es_patience
-    eff_det_args.data_path = args.data_path
-    eff_det_args.log_path = args.log_path
-    eff_det_args.saved_path = os.path.join(args.save_trained_models, f'{args.detector}_exp_' + str(args.exp_number))
-    eff_det_args.head_only = False
-    eff_det_args.load_weights = None
-    eff_det_args.num_workers = 0
-    eff_det_args.debug = False
-    # in efficientDet, early stopping is based on the validation loss and has no patience parameter
-    eff_det_args.es_min_delta = 1e-3
-    return eff_det_args
 
 def create_yolov5_train_args(args, cfg_path, data_yaml_path, path_to_pretrained_model):
     # used parameters

@@ -121,27 +121,23 @@ def plot_RP_curve(recall, precision, ap, save_path):
     plt.close(plot_path)
 
 def visualize_images(output, Image_name, save_path, generator, model, image):
+    # Visualization for training or testing
     if not generator.epoch == None:
-        current_epoch = str(generator.epoch+1) #generator.epoch in [0,99]
+        current_epoch = str(generator.epoch+1) if generator.epoch == None else 'test'
     else:
         current_epoch = 'test'
 
     visualization_path = os.path.join(save_path, 'epoch_' + current_epoch)
-
-    if not os.path.exists(visualization_path):
-        os.makedirs(visualization_path)
-
-    fgImage_name = Image_name + "_fg.png"
+    os.makedirs(visualization_path, exist_ok=True)
 
     # Draw GT activations:
-    #plt.figure()
-    #plt.axis("off")
-    background = Image.open(os.path.join(generator.base_dir, fgImage_name), 'r')
-    background = background.convert("RGBA")
+    plt.figure()
+    plt.axis("off")
+    background = Image.open(os.path.join(generator.base_dir, 'RGB', f'{Image_name}.jpg'), 'r')
     BG_w, BG_h = background.size
-    # plt.imshow(background)
-    # plt.savefig(visualization_path + '/' + Image_name + '_BG.png', pad_inches=0)  # transparent=True,
-    # plt.close()
+    plt.imshow(background)
+    plt.savefig(visualization_path + '/' + Image_name + '_BG.png', pad_inches=0)  # transparent=True,
+    plt.close()
 
     anno = output[2][0, :, :, 0]
     plt.figure()
@@ -149,10 +145,10 @@ def visualize_images(output, Image_name, save_path, generator, model, image):
     #heat_map = heat_map.despine
     #heat_map = heat_map.get_figure()
     plt.imshow(anno)
-    plt.imsave(visualization_path + '/' + Image_name + '_anno.png', anno)
-    gt_anns = Image.open(visualization_path + '/' + Image_name + '_anno.png')
+    plt.imsave(visualization_path + '/' + Image_name + '_anno.jpg', anno)
+    gt_anns = Image.open(visualization_path + '/' + Image_name + '_anno.jpg')
     gt_anns = gt_anns.resize((BG_w, BG_h))  # Image.ANTIALIAS
-    plt.imsave(visualization_path + '/' + Image_name + '_anno.png', gt_anns)
+    plt.imsave(visualization_path + '/' + Image_name + '_anno.jpg', gt_anns)
     plt.close()
 
     # out = image1 * (1.0 - alpha) + image2 * alpha
@@ -160,7 +156,7 @@ def visualize_images(output, Image_name, save_path, generator, model, image):
     plt.axis("off")
     alphaBlended = Image.blend(gt_anns, background, 0.6)
     plt.imshow(alphaBlended)
-    plt.imsave(visualization_path + '/' + Image_name + '_Blended_GT.png',alphaBlended )
+    plt.imsave(visualization_path + '/' + Image_name + '_Blended_GT.jpg',alphaBlended )
     plt.close()
 
     # Relu map #######################################################################################################
@@ -170,19 +166,19 @@ def visualize_images(output, Image_name, save_path, generator, model, image):
     classification_submodel_activations = classification_submodel_activations[0][0, :, :, 0]
 
     plt.imshow(classification_submodel_activations)
-    plt.imsave(visualization_path + '/' + Image_name + '_Relu.png', classification_submodel_activations)
-    relu_anns = Image.open(visualization_path + '/' + Image_name + '_Relu.png')
+    plt.imsave(visualization_path + '/' + Image_name + '_Relu.jpg', classification_submodel_activations)
+    relu_anns = Image.open(visualization_path + '/' + Image_name + '_Relu.jpg')
 
     #relu_anns = relu_anns.convert("RGBA")
     relu_anns = relu_anns.resize((BG_w, BG_h))  # Image.ANTIALIAS
-    plt.imsave(visualization_path + '/' + Image_name + '_Relu.png', relu_anns)
+    plt.imsave(visualization_path + '/' + Image_name + '_Relu.jpg', relu_anns)
     plt.close()
 
     plt.figure()
     plt.axis("off")
     alphaBlended_relu = Image.blend(relu_anns, background, 0.6)
     plt.imshow(alphaBlended_relu)
-    plt.imsave(visualization_path + '/' + Image_name + '_Blended_Relu.png', alphaBlended_relu)
+    plt.imsave(visualization_path + '/' + Image_name + '_Blended_Relu.jpg', alphaBlended_relu)
     plt.close()
 
     # softmax map #####################################################################################################
@@ -194,18 +190,18 @@ def visualize_images(output, Image_name, save_path, generator, model, image):
 
     plt.imshow(local_soft_max_activations)
     plt.imsave(visualization_path + '/' + Image_name + '_softmax.png', local_soft_max_activations)
-    softmax_anns = Image.open(visualization_path + '/' + Image_name + '_softmax.png')
+    softmax_anns = Image.open(visualization_path + '/' + Image_name + '_softmax.jpg')
 
     #softmax_anns = softmax_anns.convert("RGBA")
     softmax_anns = softmax_anns.resize((BG_w, BG_h))  # Image.
-    plt.imsave(visualization_path + '/' + Image_name + '_softmax.png', softmax_anns)
+    plt.imsave(visualization_path + '/' + Image_name + '_softmax.jpg', softmax_anns)
     plt.close()
 
     plt.figure()
     plt.axis("off")
     alphaBlended_softmax = Image.blend(softmax_anns, background, 0.6)
     plt.imshow(alphaBlended_softmax)
-    plt.imsave(visualization_path + '/' + Image_name + '_Blended_softmax.png', alphaBlended_softmax)
+    plt.imsave(visualization_path + '/' + Image_name + '_Blended_softmax.jpg', alphaBlended_softmax)
     plt.close()
 
 def label_color(label):

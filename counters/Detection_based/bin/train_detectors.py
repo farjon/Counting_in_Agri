@@ -28,20 +28,6 @@ def train_detectron2(args):
     trainer.train()
 
 
-def train_efficientDet(args):
-    cfg_path = os.path.join(args.ROOT_DIR, 'counters', 'Detection_based', 'config',
-                            'efficient_det_' + args.data + '_cfg')
-    from EfficientDet_Pytorch.train import train as eff_train
-    from counters.Detection_based.utils.create_detector_args import create_efficientDet_args
-
-    eff_det_args = create_efficientDet_args(args, cfg_path)
-
-    # model will be stored at eff_det_args.save_path
-    # under the name 'args.data/'efficientdet-d{opt.compound_coef}_{best_epoch}.pth''
-    # best_epoch = eff_train(eff_det_args)
-    best_epoch = 48
-    print(f'Training finished, best epoch: {best_epoch}')
-    return best_epoch, eff_det_args
 
 
 

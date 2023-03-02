@@ -81,85 +81,6 @@ def test_detectron2(args):
 
     return images_counting_results, images_detection_results
 
-def test_efficientDet(args, eff_det_args, best_epoch):
-    from EfficientDet_Pytorch.train import Params
-
-    from EfficientDet_Pytorch.backbone import EfficientDetBackbone
-    from EfficientDet_Pytorch.efficientdet.utils import BBoxTransform, ClipBoxes
-    from EfficientDet_Pytorch.utils.utils import preprocess, invert_affine, postprocess
-    model_dir = f'{args.detector.split("_")[0]}_{args.data}'
-    model_path = os.path.join(eff_det_args.saved_path, model_dir,  f'efficientdet-d{eff_det_args.compound_coef}_{best_epoch}.pth')
-
-    if args.visualize:
-        path_to_save_visualization = os.path.join(args.save_counting_results, f'{args.detector}_{str(args.exp_number)}', 'visualize')
-        os.makedirs(path_to_save_visualization, exist_ok=True)
-
-    params = Params(f'{eff_det_args.project}.yml')
-
-    input_sizes = [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]
-    input_size = input_sizes[eff_det_args.compound_coef]
-
-    regressBoxes = BBoxTransform()
-    clipBoxes = ClipBoxes()
-
-    predictor = EfficientDetBackbone(compound_coef=eff_det_args.compound_coef, num_classes=len(params.obj_list),
-                                     ratios=eval(params.__getattr__('anchors_ratios')), scales=eval(params.__getattr__('anchors_scales')))
-    predictor.load_state_dict(torch.load(model_path, map_location='cpu'))
-    predictor.requires_grad_(False)
-    predictor.eval()
-    predictor.to(args.device)
-
-    with open(f'{args.data_path}/test/instances_test.json', 'rt', encoding='UTF-8') as annotations:
-        coco = json.load(annotations)
-
-    images_counting_results = {
-        'image_name': [],
-        'gt_count': [],
-        'pred_count': []
-    }
-
-    images_detection_results = {
-        'image_name': [],
-        'gt_bboxes': [],
-        'pred_bboxes': []
-    }
-
-    with torch.no_grad():
-        for image in coco['images']:
-            print(f'Processing image {image["id"]}/{len(coco["images"])}')
-            image_id = image['id']
-            image_name = image['file_name']
-            images_counting_results['image_name'].append(image_name)
-            images_detection_results['image_name'].append(image_name)
-
-            # store ground truth information - bboxes and number of objects
-            gt_bboxes = [a for a in coco['annotations'] if a['image_id'] == image_id]
-            images_counting_results['gt_count'].append(len(gt_bboxes))
-            images_detection_results['gt_bboxes'].append(gt_bboxes)
-
-            image_path = os.path.join(args.data_path, 'test', image_name)
-            # we are only using batch_size = 1 in our work
-            ori_imgs, framed_imgs, framed_metas = preprocess(image_path, max_size=input_size)
-            pred_on_imgs = torch.stack([torch.from_numpy(fi).to(args.device) for fi in framed_imgs], 0)
-            pred_on_imgs = pred_on_imgs.to(torch.float32).permute(0, 3, 1, 2)
-
-            features, regression, classification, anchors = predictor(pred_on_imgs)
-            out = postprocess(pred_on_imgs,
-                              anchors, regression, classification,
-                              regressBoxes, clipBoxes,
-                              args.det_test_thresh, args.iou_threshold)
-            predictions = invert_affine(framed_metas, out)[0]
-
-            # collect the results
-            images_counting_results['pred_count'].append(len(predictions['rois']))
-            images_detection_results['pred_bboxes'].append(predictions['rois'])
-
-            if args.visualize:
-                img_to_draw = cv2.imread(os.path.join(args.data_path, 'test', image_name))
-                img = drawing_detections.draw_detections_and_annotations(img_to_draw, gt_bboxes, predictions['rois'], args.data)
-                cv2.imwrite(os.path.join(path_to_save_visualization, image_name), img)
-        return images_counting_results, images_detection_results
-
 def test_yolov5(args):
     from yolov5.detect import run as yolov5_detect
     from counters.Detection_based.utils.create_detector_args import create_yolov5_infer_args
@@ -186,8 +107,23 @@ def test_yolov5(args):
     }
     labels_dir = os.path.join(args.data_path, 'labels', args.test_set)
     predictions_dir = os.path.join(yolo_infer_args.project, yolo_infer_args.name, 'labels')
+
+    # find image format
+    for image_name in os.listdir(os.path.join(args.data_path, 'images', 'test')):
+        if image_name.endswith('.jpg'):
+            image_format = '.jpg'
+            break
+        elif image_name.endswith('.png'):
+            image_format = '.png'
+            break
+        elif image_name.endswith('.jpeg'):
+            image_format = '.jpeg'
+            break
+        else:
+            raise ValueError('Image format is not supported')
+
     for image_res_name in os.listdir(labels_dir):
-        image_name = image_res_name.replace('.txt', '.jpg')
+        image_name = image_res_name.replace('.txt', image_format)
         # collect image names for both counting and detection
         images_counting_results['image_name'].append(image_res_name)
         images_detection_results['image_name'].append(image_res_name)
