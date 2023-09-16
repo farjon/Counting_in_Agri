@@ -36,10 +36,11 @@ def create_generator(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test MSR or DRN network.')
-    parser.add_argument('--model_type', type=str, default='MSR_P3_P7_Gauss_MLE', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
-    parser.add_argument('--dataset_name', type=str, default='CherryTomato', help = 'can be either Grapes / WheatSpikelets / BananaLeaves / Banana / A1 / A2 / A3 / A4 / Ac / A1A2A3A4')
+    parser.add_argument('--model_type', type=str, default='DRN', help = 'can be either MSR_P3_L2 / MSR_P3_P7_Gauss_MLE / DRN')
+    parser.add_argument('--dataset_name', type=str, default='WheatSpikelets', help = 'can be either Grapes / WheatSpikelets / BananaLeaves / Banana / A1 / A2 / A3 / A4 / Ac / A1A2A3A4')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--exp_num', type=int, default=0, help = 'if exp_num already exists, num will be increased automaically')
+    parser.add_argument('--visualize_im', type=bool, default=True)
     return parser.parse_args()
 
 
@@ -77,7 +78,9 @@ def main(args=None):
         generator,
         prediction_model,
         save_path=args.save_path,
-        save_results=True
+        save_results=True,
+        visualize_im=args.visualize_im,
+        visualize_im_path=args.visualize_im_path
         )
     print("CountDiff:", CountDiff, "AbsCountDiff" ,AbsCountDiff, "CountAgreement", CountAgreement, "MSE", MSE)
 
@@ -134,6 +137,10 @@ if __name__ == '__main__':
                               f'exp_{str(args.exp_num)}', f'resnet50_{args.model_type}_best.h5')
     args.final_model = os.path.join(args.ROOT_DIR, 'Trained_Models', args.dataset_name, f'{args.model_type}_Models_snapshots', args.model_type,
                               f'exp_{str(args.exp_num)}', f'resnet50_final.h5')
-
+    if args.visualize_im:
+        args.visualize_im_path = os.path.join(args.save_path, 'visualize_im')
+        os.makedirs(args.visualize_im_path, exist_ok=True)
+    else:
+        args.visualize_im_path = ''
     CountDiff, AbsCountDiff, CountAgreement, MSE = main(args)
-    pd.DataFrame([{'CountDiff': CountDiff, 'AbsCountDiff': AbsCountDiff, 'CountAgreement': CountAgreement, 'MSE': MSE}]).to_csv(os.path.join(args.save_path, 'main_results.csv'))
+    # pd.DataFrame([{'CountDiff': CountDiff, 'AbsCountDiff': AbsCountDiff, 'CountAgreement': CountAgreement, 'MSE': MSE}]).to_csv(os.path.join(args.save_path, 'main_results.csv'))
