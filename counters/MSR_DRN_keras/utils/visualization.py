@@ -1,3 +1,4 @@
+import copy
 import os
 import cv2
 import warnings
@@ -120,6 +121,20 @@ def plot_RP_curve(recall, precision, ap, save_path):
     plt.savefig(plot_path)
     plt.close(plot_path)
 
+def add_heat_map_to_image(heat_map, base_image, base_opacity=0.5):
+    # normalize the heatmap array to values between 0 and 255
+    heatmap_array = cv2.normalize(heat_map, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+    # apply a color map to the heatmap array
+    heatmap = cv2.applyColorMap(heatmap_array, cv2.COLORMAP_JET)
+
+    # resize the heatmap to match the original image
+    heatmap_resized = cv2.resize(heatmap, (base_image.shape[1], base_image.shape[0]))
+
+    # blend the heatmap with the original image using a transparency factor
+    return cv2.addWeighted(base_image, 1 - base_opacity, heatmap_resized, base_opacity, 0)
+
+
 def visualize_images(output, Image_name, save_path, generator, model, image):
     # Visualization for training or testing
     if not generator.epoch == None:
@@ -130,79 +145,29 @@ def visualize_images(output, Image_name, save_path, generator, model, image):
     visualization_path = os.path.join(save_path, 'epoch_' + current_epoch)
     os.makedirs(visualization_path, exist_ok=True)
 
-    # Draw GT activations:
-    plt.figure()
-    plt.axis("off")
-    background = Image.open(os.path.join(generator.base_dir, 'RGB', f'{Image_name}.jpg'), 'r')
-    BG_w, BG_h = background.size
-    plt.imshow(background)
-    plt.savefig(visualization_path + '/' + Image_name + '_BG.png', pad_inches=0)  # transparent=True,
-    plt.close()
+    background = cv2.imread(os.path.join(generator.base_dir, 'RGB', f'{Image_name}.jpg'))
 
-    anno = output[2][0, :, :, 0]
-    plt.figure()
-    #heat_map = seaborn.heatmap(anno, xticklabels=False, yticklabels=False, cbar=False)
-    #heat_map = heat_map.despine
-    #heat_map = heat_map.get_figure()
-    plt.imshow(anno)
-    plt.imsave(visualization_path + '/' + Image_name + '_anno.jpg', anno)
-    gt_anns = Image.open(visualization_path + '/' + Image_name + '_anno.jpg')
-    gt_anns = gt_anns.resize((BG_w, BG_h))  # Image.ANTIALIAS
-    plt.imsave(visualization_path + '/' + Image_name + '_anno.jpg', gt_anns)
-    plt.close()
+    # draw GT annotations on the original image
+    gt_annotations_image = add_heat_map_to_image(output[2][0, :, :, 0], copy.deepcopy(background), base_opacity=0.3)
+    cv2.imwrite(visualization_path + '/' + Image_name + '_GT_annotations.jpg', gt_annotations_image)
 
-    # out = image1 * (1.0 - alpha) + image2 * alpha
-    plt.figure()
-    plt.axis("off")
-    alphaBlended = Image.blend(gt_anns, background, 0.6)
-    plt.imshow(alphaBlended)
-    plt.imsave(visualization_path + '/' + Image_name + '_Blended_GT.jpg',alphaBlended )
-    plt.close()
 
-    # Relu map #######################################################################################################
-    plt.figure()
+    # draw Relu map on the original image
     classification_submodel_activations = get_activations(model, model_inputs=image[0], print_shape_only=False,
-                                                          layer_name='pyramid_classification_relu')
+                                                          layer_name='detection_subnetwork_final_relu')
     classification_submodel_activations = classification_submodel_activations[0][0, :, :, 0]
 
-    plt.imshow(classification_submodel_activations)
-    plt.imsave(visualization_path + '/' + Image_name + '_Relu.jpg', classification_submodel_activations)
-    relu_anns = Image.open(visualization_path + '/' + Image_name + '_Relu.jpg')
+    relu_layer = add_heat_map_to_image(classification_submodel_activations, copy.deepcopy(background), base_opacity=0.3)
+    cv2.imwrite(visualization_path + '/' + Image_name + '_relu_layer.jpg', relu_layer)
 
-    #relu_anns = relu_anns.convert("RGBA")
-    relu_anns = relu_anns.resize((BG_w, BG_h))  # Image.ANTIALIAS
-    plt.imsave(visualization_path + '/' + Image_name + '_Relu.jpg', relu_anns)
-    plt.close()
 
-    plt.figure()
-    plt.axis("off")
-    alphaBlended_relu = Image.blend(relu_anns, background, 0.6)
-    plt.imshow(alphaBlended_relu)
-    plt.imsave(visualization_path + '/' + Image_name + '_Blended_Relu.jpg', alphaBlended_relu)
-    plt.close()
-
-    # softmax map #####################################################################################################
-
-    plt.figure()
+    # draw softmax map on the original image
     local_soft_max_activations = get_activations(model, model_inputs=image[0], print_shape_only=False,
                                                  layer_name='LocalSoftMax')
     local_soft_max_activations = local_soft_max_activations[0][0, :, :, 0]
 
-    plt.imshow(local_soft_max_activations)
-    plt.imsave(visualization_path + '/' + Image_name + '_softmax.png', local_soft_max_activations)
-    softmax_anns = Image.open(visualization_path + '/' + Image_name + '_softmax.jpg')
-
-    #softmax_anns = softmax_anns.convert("RGBA")
-    softmax_anns = softmax_anns.resize((BG_w, BG_h))  # Image.
-    plt.imsave(visualization_path + '/' + Image_name + '_softmax.jpg', softmax_anns)
-    plt.close()
-
-    plt.figure()
-    plt.axis("off")
-    alphaBlended_softmax = Image.blend(softmax_anns, background, 0.6)
-    plt.imshow(alphaBlended_softmax)
-    plt.imsave(visualization_path + '/' + Image_name + '_Blended_softmax.jpg', alphaBlended_softmax)
-    plt.close()
+    softmax_layer = add_heat_map_to_image(local_soft_max_activations, copy.deepcopy(background), base_opacity=0.3)
+    cv2.imwrite(visualization_path + '/' + Image_name + '_softmax_layer.jpg', softmax_layer)
 
 def label_color(label):
     """ Return a color from a set of predefined colors. Contains 80 colors in total.
