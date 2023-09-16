@@ -1,6 +1,6 @@
 # Counting in Agriculture
 
-This repository contains an implementation of a machine learning algorithm for image classification. The algorithm is designed to classify images into different categories, such as animals, vehicles, and landscapes.
+This repository contains an implementation of counting algorithms for the agriculture domain.
 
 ## Repository Structure
 
@@ -32,7 +32,7 @@ The repository is structured as follows:
 * If the images should be tiled into tiles, the first run will split it 
 
 
-## Detectors
+## Detection based counting
 
 ### yolov5
 To train the yolov5, two .yaml files should be prepard
@@ -43,6 +43,7 @@ They should contain the information about your dataset\
 for 'yolo5_i_Dataset.yaml' - it should include n=X where X is the number of classes\
 for 'Dataset.yaml' - it should contain the classes' names
 
+### detectron2 repository for Faster-RCNN and RetinaNet
 
 
 
